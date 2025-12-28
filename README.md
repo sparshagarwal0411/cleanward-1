@@ -1,4 +1,4 @@
-# CleanWard - Ward-Wise Pollution Awareness & Action Dashboard
+# **CleanWard - Ward-Wise Pollution Awareness & Action Dashboard**
 
 A comprehensive web application for monitoring and managing pollution data across Delhi's 250 wards. Built as a Government of NCT of Delhi initiative, CleanWard empowers citizens and authorities with real-time pollution data, educational resources, and actionable steps for cleaner communities.
 
