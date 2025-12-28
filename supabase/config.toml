@@ -1,0 +1,4 @@
+project_id = "yohxdixwidncajzvekur"
+
+[functions.fetch-pollution-data]
+verify_jwt = false
