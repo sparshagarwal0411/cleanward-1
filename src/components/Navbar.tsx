@@ -33,14 +33,14 @@ export function Navbar() {
         if (session) {
           setIsAuthenticated(true);
           // Fetch user role
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from("users")
             .select("role")
             .eq("id", session.user.id)
             .single();
           
-          if (profile) {
-            setUserRole(profile.role as "citizen" | "admin");
+          if (profile && !profileError) {
+            setUserRole((profile as { role: "citizen" | "admin" }).role);
           }
         } else {
           setIsAuthenticated(false);
@@ -58,8 +58,16 @@ export function Navbar() {
     checkAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Handle sign out events explicitly
+      if (event === 'SIGNED_OUT' || !session) {
+        setIsAuthenticated(false);
+        setUserRole(null);
+        return;
+      }
+      
+      // Only set authenticated if we have a valid session
+      if (session && session.user) {
         setIsAuthenticated(true);
         // Fetch user role on auth change
         supabase
@@ -67,9 +75,13 @@ export function Navbar() {
           .select("role")
           .eq("id", session.user.id)
           .single()
-          .then(({ data: profile }) => {
-            if (profile) {
-              setUserRole(profile.role as "citizen" | "admin");
+          .then(({ data: profile, error: profileError }) => {
+            if (profile && !profileError) {
+              setUserRole((profile as { role: "citizen" | "admin" }).role);
+            } else {
+              // If profile fetch fails, still clear auth state
+              setIsAuthenticated(false);
+              setUserRole(null);
             }
           });
       } else {
@@ -83,11 +95,32 @@ export function Navbar() {
     };
   }, []);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setIsAuthenticated(false);
-    setUserRole(null);
-    navigate("/");
+  const handleSignOut = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    try {
+      // Clear state first to prevent UI glitches
+      setIsAuthenticated(false);
+      setUserRole(null);
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Sign out error:", error);
+      }
+      
+      // Navigate to home page
+      navigate("/", { replace: true });
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // Ensure state is cleared even on error
+      setIsAuthenticated(false);
+      setUserRole(null);
+      navigate("/", { replace: true });
+    }
   };
 
   // Base navigation links (always visible)
@@ -140,7 +173,8 @@ export function Navbar() {
               variant="civic-outline" 
               size="sm" 
               className="gap-2"
-              onClick={handleSignOut}
+              onClick={(e) => handleSignOut(e)}
+              type="button"
             >
               <LogOut className="h-4 w-4" />
               Sign Out
@@ -191,10 +225,13 @@ export function Navbar() {
               <Button 
                 variant="civic-outline" 
                 className="w-full gap-2 mt-2"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setIsOpen(false);
-                  handleSignOut();
+                  handleSignOut(e);
                 }}
+                type="button"
               >
                 <LogOut className="h-4 w-4" />
                 Sign Out
