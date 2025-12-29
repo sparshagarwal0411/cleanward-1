@@ -2,9 +2,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { WardSearch } from "@/components/WardSearch";
 import { StatCard } from "@/components/StatCard";
 import { Layout } from "@/components/Layout";
+import Snowfall from "react-snowfall";
 import { 
   MapPin, 
   Users, 
@@ -19,7 +21,14 @@ import {
   CheckCircle,
   TrendingDown,
   Shield,
-  BarChart3
+  BarChart3,
+  Info,
+  HelpCircle,
+  IndianRupee,
+  Sparkles,
+  Award,
+  Zap,
+  Target
 } from "lucide-react";
 
 const Index = () => {
@@ -28,6 +37,22 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden gradient-hero py-20 md:py-32">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+        
+        {/* Snowfall Effect */}
+        <div className="absolute inset-0 z-0">
+          <Snowfall
+            color="rgba(255, 255, 255, 0.8)"
+            snowflakeCount={100}
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+            }}
+            speed={[0.5, 2]}
+            wind={[-0.5, 0.5]}
+            radius={[0.5, 3]}
+          />
+        </div>
         
         <div className="container relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
@@ -370,6 +395,419 @@ const Index = () => {
               </Link>
             </Card>
           </div>
+        </div>
+      </section>
+
+      {/* About Us Section */}
+      <section id="about" className="py-16 bg-muted/30 scroll-mt-16">
+        <div className="container">
+          <div className="text-center mb-12">
+            <Badge variant="secondary" className="mb-4">
+              <Info className="h-3 w-3 mr-1" />
+              About Us
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
+              About CleanWard
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              A comprehensive platform connecting citizens, authorities, and organizations for cleaner Delhi
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <Card variant="civic" className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Leaf className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-heading font-semibold">Our Mission</h3>
+              </div>
+              <p className="text-muted-foreground">
+                CleanWard is a government initiative by the NCT of Delhi to create a transparent, 
+                data-driven approach to pollution management. We empower citizens with real-time 
+                ward-level pollution data and actionable insights to drive community-led environmental action.
+              </p>
+            </Card>
+
+            <Card variant="civic" className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-12 w-12 rounded-full bg-success/10 flex items-center justify-center">
+                  <Target className="h-6 w-6 text-success" />
+                </div>
+                <h3 className="text-xl font-heading font-semibold">Our Vision</h3>
+              </div>
+              <p className="text-muted-foreground">
+                To make Delhi one of the cleanest cities in India by fostering citizen participation, 
+                enabling data-driven policy decisions, and creating a collaborative ecosystem where 
+                every ward takes ownership of its environmental health.
+              </p>
+            </Card>
+
+            <Card variant="civic" className="p-6 md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-12 w-12 rounded-full bg-info/10 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-info" />
+                </div>
+                <h3 className="text-xl font-heading font-semibold">Who We Are</h3>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                CleanWard is developed and maintained by the Delhi Municipal Corporation in partnership 
+                with the Delhi Pollution Control Committee (DPCC) and Central Pollution Control Board (CPCB). 
+                Our platform integrates data from multiple government sources to provide comprehensive 
+                pollution monitoring across all 250 wards of Delhi.
+              </p>
+              <div className="grid md:grid-cols-3 gap-4 mt-6">
+                <div className="text-center p-4 bg-background rounded-lg">
+                  <div className="text-2xl font-bold text-primary mb-1">250</div>
+                  <div className="text-sm text-muted-foreground">Wards Covered</div>
+                </div>
+                <div className="text-center p-4 bg-background rounded-lg">
+                  <div className="text-2xl font-bold text-success mb-1">24/7</div>
+                  <div className="text-sm text-muted-foreground">Data Monitoring</div>
+                </div>
+                <div className="text-center p-4 bg-background rounded-lg">
+                  <div className="text-2xl font-bold text-info mb-1">100%</div>
+                  <div className="text-sm text-muted-foreground">Transparent</div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQs Section */}
+      <section id="faqs" className="py-16 bg-background scroll-mt-16">
+        <div className="container">
+          <div className="text-center mb-12">
+            <Badge variant="secondary" className="mb-4">
+              <HelpCircle className="h-3 w-3 mr-1" />
+              Frequently Asked Questions
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
+              Common Questions
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Find answers to the most common questions about CleanWard
+            </p>
+          </div>
+
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="space-y-4">
+              <AccordionItem value="item-1" className="border rounded-lg px-4">
+                <AccordionTrigger className="text-left font-semibold">
+                  What is CleanWard and how does it work?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  CleanWard is a government platform that provides real-time pollution data for all 250 wards 
+                  in Delhi. Citizens can search for their ward, view pollution scores across air, water, waste, 
+                  and noise categories, and access educational resources and action steps to improve their ward's 
+                  environmental health.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-2" className="border rounded-lg px-4">
+                <AccordionTrigger className="text-left font-semibold">
+                  How is the pollution data collected?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Our data comes from multiple trusted sources including the Central Pollution Control Board (CPCB), 
+                  Delhi Pollution Control Committee (DPCC), municipal records, and IoT sensors deployed across 
+                  Delhi. Data is updated in real-time and verified by government authorities.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-3" className="border rounded-lg px-4">
+                <AccordionTrigger className="text-left font-semibold">
+                  Do I need to register to use CleanWard?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  No, you can browse ward data, view the map, and access public information without registration. 
+                  However, creating a free account gives you access to personalized dashboards, goal tracking, 
+                  educational videos, and the ability to track your environmental impact.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-4" className="border rounded-lg px-4">
+                <AccordionTrigger className="text-left font-semibold">
+                  How can I contribute to reducing pollution in my ward?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  There are multiple ways to contribute: join volunteer clean-up drives, participate in tree 
+                  plantation events, follow ward-specific action recommendations, report pollution incidents, 
+                  and spread awareness in your community. You can also make donations to support ward-level 
+                  initiatives through our platform.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-5" className="border rounded-lg px-4">
+                <AccordionTrigger className="text-left font-semibold">
+                  Is CleanWard free to use?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Yes, all basic features are completely free. Citizens can access pollution data, educational 
+                  content, and participate in community initiatives at no cost. We offer optional premium features 
+                  for advanced analytics and priority support, but the core platform remains free for all citizens.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-6" className="border rounded-lg px-4">
+                <AccordionTrigger className="text-left font-semibold">
+                  How accurate is the pollution data?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Our data is sourced from government-certified monitoring stations and verified by environmental 
+                  authorities. We update data multiple times daily and use standardized measurement protocols 
+                  approved by CPCB and DPCC. However, pollution levels can vary within a ward, so data represents 
+                  average conditions.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-7" className="border rounded-lg px-4">
+                <AccordionTrigger className="text-left font-semibold">
+                  Can NGOs or organizations partner with CleanWard?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Absolutely! We welcome partnerships with NGOs, community organizations, and corporate entities. 
+                  Organizations can register through our platform to participate in clean-up drives, awareness 
+                  campaigns, and implementation projects. Contact us through the "Register Your NGO" section for more information.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-8" className="border rounded-lg px-4">
+                <AccordionTrigger className="text-left font-semibold">
+                  How do I report a pollution issue in my area?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Once you're logged into your Citizen Dashboard, you can report pollution incidents directly 
+                  through the platform. Reports are forwarded to the relevant municipal authorities and 
+                  tracked for resolution. You can also call our toll-free helpline at 1800-XXX-XXXX for urgent issues.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing/Billing Section */}
+      <section id="pricing" className="py-16 bg-muted/30 scroll-mt-16">
+        <div className="container">
+          <div className="text-center mb-12">
+            <Badge variant="secondary" className="mb-4">
+              <IndianRupee className="h-3 w-3 mr-1" />
+              Pricing & Support
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
+              Affordable Plans for Everyone
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Choose a plan that fits your needs. All plans support our mission to make Delhi cleaner.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
+            {/* Free Plan */}
+            <Card variant="civic" className="relative">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <CardTitle className="text-2xl">Citizen</CardTitle>
+                  <Badge variant="secondary">Free</Badge>
+                </div>
+                <CardDescription>Perfect for individual citizens</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="text-3xl font-bold">₹0</div>
+                  <div className="text-sm text-muted-foreground">Forever free</div>
+                </div>
+                <ul className="space-y-3">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Access to all ward pollution data</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Personal dashboard & goal tracking</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Educational videos & guides</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Join volunteer programs</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Report pollution incidents</span>
+                  </li>
+                </ul>
+                <Link to="/auth">
+                  <Button variant="civic" className="w-full">Get Started Free</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Premium Plan */}
+            <Card variant="civic" className="relative border-2 border-primary">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+              </div>
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <CardTitle className="text-2xl">Premium</CardTitle>
+                  <Badge variant="outline">₹99/mo</Badge>
+                </div>
+                <CardDescription>For engaged citizens & small groups</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="text-3xl font-bold">₹99</div>
+                  <div className="text-sm text-muted-foreground">per month or ₹999/year</div>
+                </div>
+                <ul className="space-y-3">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Everything in Citizen plan</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Advanced analytics & trends</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Priority support & response</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Early access to new features</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Detailed impact reports</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Ad-free experience</span>
+                  </li>
+                </ul>
+                <Link to="/auth">
+                  <Button variant="civic" className="w-full">Upgrade to Premium</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Organization Plan */}
+            <Card variant="civic" className="relative">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <CardTitle className="text-2xl">Organization</CardTitle>
+                  <Badge variant="secondary">Custom</Badge>
+                </div>
+                <CardDescription>For NGOs & community groups</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="text-3xl font-bold">₹499</div>
+                  <div className="text-sm text-muted-foreground">per month (starting)</div>
+                </div>
+                <ul className="space-y-3">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Everything in Premium</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Team management (up to 50 members)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Custom reporting & analytics</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Event management tools</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">Dedicated account manager</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">API access for integration</span>
+                  </li>
+                </ul>
+                <Link to="/auth">
+                  <Button variant="civic-outline" className="w-full">Contact Sales</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Revenue Model Explanation */}
+          <Card variant="civic" className="max-w-4xl mx-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                How We Sustain CleanWard
+              </CardTitle>
+              <CardDescription>Transparent funding model for a government initiative</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                CleanWard is a government initiative, but we operate on a sustainable model to ensure 
+                long-term operation and continuous improvement:
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Award className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">Government Funding</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Core infrastructure and basic features are funded by the Delhi Municipal Corporation 
+                    under the Swachh Bharat Mission.
+                  </p>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap className="h-5 w-5 text-success" />
+                    <h4 className="font-semibold">Premium Subscriptions</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Affordable premium plans (₹99/month) help fund advanced features, server costs, 
+                    and platform improvements.
+                  </p>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <HeartHandshake className="h-5 w-5 text-warning" />
+                    <h4 className="font-semibold">Citizen Donations</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Voluntary contributions from citizens directly support ward-level clean-up initiatives 
+                    and awareness campaigns.
+                  </p>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="h-5 w-5 text-info" />
+                    <h4 className="font-semibold">Corporate Partnerships</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    CSR partnerships with organizations help fund large-scale projects and infrastructure 
+                    improvements.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <p className="text-sm">
+                  <strong>100% Transparency:</strong> All revenue is used exclusively for platform 
+                  maintenance, data collection, and community initiatives. Financial reports are 
+                  published quarterly on our official website.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
     </Layout>

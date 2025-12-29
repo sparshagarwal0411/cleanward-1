@@ -1,7 +1,25 @@
-import { Link } from "react-router-dom";
-import { Leaf, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Leaf, Mail, Phone, MapPin, ExternalLink, Info, HelpCircle, IndianRupee } from "lucide-react";
 
 export function Footer() {
+  const navigate = useNavigate();
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      // If not on home page, navigate to home first
+      navigate('/');
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  };
+
   return (
     <footer className="border-t bg-muted/30">
       <div className="container py-12">
@@ -25,13 +43,34 @@ export function Footer() {
                 <Link to="/map" className="hover:text-primary transition-colors">Ward Map</Link>
               </li>
               <li>
-                <Link to="/citizen" className="hover:text-primary transition-colors">Citizen Dashboard</Link>
-              </li>
-              <li>
-                <Link to="/authority" className="hover:text-primary transition-colors">Authority Portal</Link>
-              </li>
-              <li>
                 <Link to="/auth" className="hover:text-primary transition-colors">Login / Register</Link>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('about')} 
+                  className="hover:text-primary transition-colors text-left flex items-center gap-1"
+                >
+                  <Info className="h-3 w-3" />
+                  About Us
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('faqs')} 
+                  className="hover:text-primary transition-colors text-left flex items-center gap-1"
+                >
+                  <HelpCircle className="h-3 w-3" />
+                  FAQs
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection('pricing')} 
+                  className="hover:text-primary transition-colors text-left flex items-center gap-1"
+                >
+                  <IndianRupee className="h-3 w-3" />
+                  Pricing
+                </button>
               </li>
             </ul>
           </div>
@@ -40,22 +79,22 @@ export function Footer() {
             <h4 className="font-heading font-semibold">Get Involved</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <a href="#" className="hover:text-primary transition-colors flex items-center gap-1">
+                <a href="#pricing" onClick={(e) => { e.preventDefault(); scrollToSection('pricing'); }} className="hover:text-primary transition-colors flex items-center gap-1">
                   Join as Volunteer <ExternalLink className="h-3 w-3" />
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors flex items-center gap-1">
+                <a href="#pricing" onClick={(e) => { e.preventDefault(); scrollToSection('pricing'); }} className="hover:text-primary transition-colors flex items-center gap-1">
                   Register Your NGO <ExternalLink className="h-3 w-3" />
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors flex items-center gap-1">
+                <a href="#pricing" onClick={(e) => { e.preventDefault(); scrollToSection('pricing'); }} className="hover:text-primary transition-colors flex items-center gap-1">
                   Partner with Municipality <ExternalLink className="h-3 w-3" />
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors flex items-center gap-1">
+                <a href="#pricing" onClick={(e) => { e.preventDefault(); scrollToSection('pricing'); }} className="hover:text-primary transition-colors flex items-center gap-1">
                   Contribute to the Cause <ExternalLink className="h-3 w-3" />
                 </a>
               </li>
@@ -71,18 +110,22 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary" />
-                contact@cleanward.delhi.gov.in
+                <a href="mailto:contact@cleanward.delhi.gov.in" className="hover:text-primary transition-colors">
+                  contact@cleanward.delhi.gov.in
+                </a>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary" />
-                1800-XXX-XXXX (Toll Free)
+                <a href="tel:1800-XXX-XXXX" className="hover:text-primary transition-colors">
+                  1800-XXX-XXXX (Toll Free)
+                </a>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>© 2024 CleanWard - Government of NCT of Delhi. All rights reserved.</p>
+          <p>© 2025 CleanWard - Government of NCT of Delhi. All rights reserved.</p>
           <p className="mt-1">
             An initiative under Swachh Bharat Mission | Data sourced from CPCB, DPCC & Municipal Records
           </p>

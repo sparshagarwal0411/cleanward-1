@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { 
@@ -8,22 +8,104 @@ import {
   MapPin, 
   LayoutDashboard, 
   Users,
-  LogIn
+  LogIn,
+  LogOut
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<"citizen" | "admin" | null>(null);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path: string) => location.pathname === path;
 
-  const navLinks = [
+  useEffect(() => {
+    // Check authentication status
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          setIsAuthenticated(true);
+          // Fetch user role
+          const { data: profile } = await supabase
+            .from("users")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+          
+          if (profile) {
+            setUserRole(profile.role as "citizen" | "admin");
+          }
+        } else {
+          setIsAuthenticated(false);
+          setUserRole(null);
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        setIsAuthenticated(false);
+        setUserRole(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setIsAuthenticated(true);
+        // Fetch user role on auth change
+        supabase
+          .from("users")
+          .select("role")
+          .eq("id", session.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            if (profile) {
+              setUserRole(profile.role as "citizen" | "admin");
+            }
+          });
+      } else {
+        setIsAuthenticated(false);
+        setUserRole(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setUserRole(null);
+    navigate("/");
+  };
+
+  // Base navigation links (always visible)
+  const baseNavLinks = [
     { to: "/", label: "Home", icon: Leaf },
     { to: "/map", label: "Ward Map", icon: MapPin },
-    { to: "/citizen", label: "Citizen Dashboard", icon: Users },
-    { to: "/authority", label: "Authority Portal", icon: LayoutDashboard },
   ];
+
+  // Dashboard link based on user role
+  const dashboardLink = isAuthenticated && userRole === "admin" 
+    ? { to: "/authority", label: "Authority Portal", icon: LayoutDashboard }
+    : isAuthenticated && userRole === "citizen"
+    ? { to: "/citizen", label: "Citizen Dashboard", icon: Users }
+    : null;
+
+  const navLinks = dashboardLink 
+    ? [...baseNavLinks, dashboardLink]
+    : baseNavLinks;
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -53,12 +135,24 @@ export function Navbar() {
 
         <div className="hidden md:flex items-center gap-2">
           <ThemeToggle />
-          <Link to="/auth">
-            <Button variant="civic" size="sm" className="gap-2">
-              <LogIn className="h-4 w-4" />
-              Sign In
+          {isAuthenticated ? (
+            <Button 
+              variant="civic-outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
             </Button>
-          </Link>
+          ) : (
+            <Link to="/auth">
+              <Button variant="civic" size="sm" className="gap-2">
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -93,12 +187,26 @@ export function Navbar() {
                 </Button>
               </Link>
             ))}
-            <Link to="/auth" onClick={() => setIsOpen(false)}>
-              <Button variant="civic" className="w-full gap-2 mt-2">
-                <LogIn className="h-4 w-4" />
-                Sign In
+            {isAuthenticated ? (
+              <Button 
+                variant="civic-outline" 
+                className="w-full gap-2 mt-2"
+                onClick={() => {
+                  setIsOpen(false);
+                  handleSignOut();
+                }}
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
               </Button>
-            </Link>
+            ) : (
+              <Link to="/auth" onClick={() => setIsOpen(false)}>
+                <Button variant="civic" className="w-full gap-2 mt-2">
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       )}
