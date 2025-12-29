@@ -10,6 +10,7 @@ import { PollutionScore, TrendIndicator } from "@/components/PollutionScore";
 import { getWardById, getStatusFromScore } from "@/data/wards";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { usePollutionData } from "@/hooks/usePollutionData";
 import { 
   User, 
   MapPin, 
@@ -23,7 +24,9 @@ import {
   Plus,
   Award,
   Calendar,
-  TrendingUp
+  TrendingUp,
+  Gauge,
+  RefreshCw
 } from "lucide-react";
 
 interface UserData {
@@ -68,6 +71,7 @@ const CitizenDashboard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { wards, isLoading: pollutionLoading, refetch, isUsingRealData } = usePollutionData();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -117,8 +121,19 @@ const CitizenDashboard = () => {
     fetchUserData();
   }, [navigate, toast]);
 
-  const ward = userData ? getWardById(userData.ward_number) : null;
+  const baseWard = userData ? getWardById(userData.ward_number) : null;
+  const wardWithAQI = userData ? wards.find(w => w.id === userData.ward_number) || baseWard : null;
+  const ward = wardWithAQI || baseWard;
   const userName = userData ? `${userData.first_name} ${userData.last_name}` : "User";
+
+  const getAQICategory = (aqi: number) => {
+    if (aqi <= 50) return { label: 'Good', color: 'text-success', bg: 'bg-success/10' };
+    if (aqi <= 100) return { label: 'Moderate', color: 'text-info', bg: 'bg-info/10' };
+    if (aqi <= 150) return { label: 'Unhealthy for Sensitive', color: 'text-warning', bg: 'bg-warning/10' };
+    if (aqi <= 200) return { label: 'Unhealthy', color: 'text-destructive', bg: 'bg-destructive/10' };
+    if (aqi <= 300) return { label: 'Very Unhealthy', color: 'text-destructive', bg: 'bg-destructive/20' };
+    return { label: 'Hazardous', color: 'text-destructive', bg: 'bg-destructive/30' };
+  };
 
   const toggleGoal = (goalId: string) => {
     setSelectedGoals(prev => 
@@ -191,42 +206,98 @@ const CitizenDashboard = () => {
           <div className="lg:col-span-2 space-y-8">
             {/* Ward Pollution Summary */}
             {ward && (
-              <Card variant="civic">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    Your Ward: {ward.name}
-                  </CardTitle>
-                  <CardDescription>Current pollution status and trends</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col md:flex-row gap-6 items-center">
-                    <PollutionScore score={ward.pollutionScore} size="lg" />
-                    <div className="flex-1 grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-sm text-muted-foreground">Air Quality</div>
-                        <div className="text-xl font-semibold">{ward.airQuality}/100</div>
+              <div className="space-y-4">
+                <Card variant="civic">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      Your Ward: {ward.name}
+                    </CardTitle>
+                    <CardDescription>Current pollution status and trends</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col md:flex-row gap-6 items-center">
+                      <PollutionScore score={ward.pollutionScore} size="lg" />
+                      <div className="flex-1 grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-sm text-muted-foreground">Air Quality</div>
+                          <div className="text-xl font-semibold">{ward.airQuality}/100</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-muted-foreground">Water Quality</div>
+                          <div className="text-xl font-semibold">{ward.waterQuality}/100</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-muted-foreground">Waste Management</div>
+                          <div className="text-xl font-semibold">{ward.wasteManagement}/100</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-muted-foreground">Noise Level</div>
+                          <div className="text-xl font-semibold">{ward.noiseLevel}/100</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Water Quality</div>
-                        <div className="text-xl font-semibold">{ward.waterQuality}/100</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Waste Management</div>
-                        <div className="text-xl font-semibold">{ward.wasteManagement}/100</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Noise Level</div>
-                        <div className="text-xl font-semibold">{ward.noiseLevel}/100</div>
+                      <div className="space-y-2">
+                        <TrendIndicator value={ward.trend7Days} label="7 days" />
+                        <TrendIndicator value={ward.trend30Days} label="30 days" />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <TrendIndicator value={ward.trend7Days} label="7 days" />
-                      <TrendIndicator value={ward.trend30Days} label="30 days" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+
+                {/* Live AQI Display */}
+                {wardWithAQI && wardWithAQI.aqi !== undefined && wardWithAQI.aqi !== null && (
+                  <Card className="border-2 border-primary/20">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <Gauge className="h-5 w-5 text-primary" />
+                          Live Air Quality Index (AQI)
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          {isUsingRealData && (
+                            <Badge variant="default" className="bg-success text-success-foreground">
+                              Live
+                            </Badge>
+                          )}
+                          <Button variant="ghost" size="icon" onClick={refetch} disabled={pollutionLoading}>
+                            <RefreshCw className={`h-4 w-4 ${pollutionLoading ? 'animate-spin' : ''}`} />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-6">
+                        <div className="text-center">
+                          <div className="text-5xl font-bold text-primary">{wardWithAQI.aqi}</div>
+                          <div className="text-sm text-muted-foreground mt-1">AQI</div>
+                        </div>
+                        <div className="flex-1">
+                          {(() => {
+                            const category = getAQICategory(wardWithAQI.aqi!);
+                            return (
+                              <div className={`p-4 rounded-lg ${category.bg}`}>
+                                <div className={`font-semibold text-lg ${category.color}`}>
+                                  {category.label}
+                                </div>
+                                {wardWithAQI.pm25 && (
+                                  <div className="text-sm text-muted-foreground mt-2">
+                                    PM2.5: {wardWithAQI.pm25} µg/m³
+                                  </div>
+                                )}
+                                {wardWithAQI.lastUpdated && (
+                                  <div className="text-xs text-muted-foreground mt-2">
+                                    Updated: {new Date(wardWithAQI.lastUpdated).toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             )}
 
             {/* Tabs for Content */}

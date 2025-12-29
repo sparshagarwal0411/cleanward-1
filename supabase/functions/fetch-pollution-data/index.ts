@@ -10,7 +10,7 @@ const corsHeaders = {
 // CPCB India Real-time AQI Data API (unofficial endpoint that mirrors public data)
 // Also using waqi.info public API as backup
 const WAQI_API_BASE = 'https://api.waqi.info';
-const DEMO_TOKEN = 'demo'; // WAQI offers a demo token for limited requests
+const WAQI_TOKEN = '352d3f3b355cbc332a0a6c5b62da52f546ed1b9c'; // Real WAQI API token
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -47,7 +47,7 @@ serve(async (req) => {
     const stationPromises = delhiStations.map(async (station) => {
       try {
         const response = await fetch(
-          `${WAQI_API_BASE}/feed/${station.id}/?token=${DEMO_TOKEN}`,
+          `${WAQI_API_BASE}/feed/${station.id}/?token=${WAQI_TOKEN}`,
           { headers: { 'Accept': 'application/json' } }
         );
         

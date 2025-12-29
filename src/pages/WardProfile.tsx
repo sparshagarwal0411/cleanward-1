@@ -1,10 +1,13 @@
 import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PollutionScore, TrendIndicator } from "@/components/PollutionScore";
 import { getWardById, getStatusFromScore, getStatusLabel } from "@/data/wards";
+import { usePollutionData } from "@/hooks/usePollutionData";
+import { Ward } from "@/types";
 import { 
   ArrowLeft, 
   MapPin, 
@@ -18,15 +21,27 @@ import {
   Lightbulb,
   CheckCircle,
   BookOpen,
-  ExternalLink
+  ExternalLink,
+  RefreshCw,
+  Gauge
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 const WardProfile = () => {
   const { id } = useParams<{ id: string }>();
-  const ward = getWardById(parseInt(id || "1"));
+  const wardId = parseInt(id || "1");
+  const ward = getWardById(wardId);
+  const { wards, isLoading, refetch, isUsingRealData } = usePollutionData();
+  const [wardWithAQI, setWardWithAQI] = useState<Ward | undefined>(ward);
+  
+  useEffect(() => {
+    const updatedWard = wards.find(w => w.id === wardId);
+    if (updatedWard) {
+      setWardWithAQI(updatedWard);
+    }
+  }, [wards, wardId]);
 
-  if (!ward) {
+  if (!ward || !wardWithAQI) {
     return (
       <Layout>
         <div className="container py-16 text-center">
@@ -39,17 +54,26 @@ const WardProfile = () => {
     );
   }
 
+  const getAQICategory = (aqi: number) => {
+    if (aqi <= 50) return { label: 'Good', color: 'text-success', bg: 'bg-success/10' };
+    if (aqi <= 100) return { label: 'Moderate', color: 'text-info', bg: 'bg-info/10' };
+    if (aqi <= 150) return { label: 'Unhealthy for Sensitive', color: 'text-warning', bg: 'bg-warning/10' };
+    if (aqi <= 200) return { label: 'Unhealthy', color: 'text-destructive', bg: 'bg-destructive/10' };
+    if (aqi <= 300) return { label: 'Very Unhealthy', color: 'text-destructive', bg: 'bg-destructive/20' };
+    return { label: 'Hazardous', color: 'text-destructive', bg: 'bg-destructive/30' };
+  };
+
   const pollutionData = [
-    { type: 'air', label: 'Air Quality', value: ward.airQuality, icon: Wind, color: 'text-info' },
-    { type: 'water', label: 'Water Quality', value: ward.waterQuality, icon: Droplets, color: 'text-primary' },
-    { type: 'waste', label: 'Waste Management', value: ward.wasteManagement, icon: Trash2, color: 'text-warning' },
-    { type: 'noise', label: 'Noise Level', value: ward.noiseLevel, icon: Volume2, color: 'text-destructive' },
+    { type: 'air', label: 'Air Quality', value: wardWithAQI.airQuality, icon: Wind, color: 'text-info' },
+    { type: 'water', label: 'Water Quality', value: wardWithAQI.waterQuality, icon: Droplets, color: 'text-primary' },
+    { type: 'waste', label: 'Waste Management', value: wardWithAQI.wasteManagement, icon: Trash2, color: 'text-warning' },
+    { type: 'noise', label: 'Noise Level', value: wardWithAQI.noiseLevel, icon: Volume2, color: 'text-destructive' },
   ];
 
   const educationContent = [
     {
       title: "Why is Air Quality Low?",
-      content: `Ward ${ward.id} experiences elevated PM2.5 levels primarily due to ${ward.sources[0]} and ${ward.sources[1] || 'local activities'}. Dense traffic during peak hours and inadequate green cover contribute to poor air dispersion.`
+      content: `Ward ${wardWithAQI.id} experiences elevated PM2.5 levels primarily due to ${wardWithAQI.sources[0]} and ${wardWithAQI.sources[1] || 'local activities'}. Dense traffic during peak hours and inadequate green cover contribute to poor air dispersion.`
     },
     {
       title: "Understanding Water Contamination",
@@ -57,7 +81,7 @@ const WardProfile = () => {
     },
     {
       title: "Waste Management Challenges",
-      content: `With a population of ${ward.population.toLocaleString()}, the ward generates significant daily waste. Segregation compliance and timely collection remain key challenges.`
+      content: `With a population of ${wardWithAQI.population.toLocaleString()}, the ward generates significant daily waste. Segregation compliance and timely collection remain key challenges.`
     }
   ];
 
@@ -86,7 +110,7 @@ const WardProfile = () => {
               <Badge variant="outline" className="text-sm">Ward {ward.id}</Badge>
               <Badge variant="secondary">{ward.zone}</Badge>
             </div>
-            <h1 className="text-3xl font-heading font-bold mb-2">{ward.name}</h1>
+            <h1 className="text-3xl font-heading font-bold mb-2">{wardWithAQI.name}</h1>
             <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
               <span className="flex items-center gap-1">
                 <MapPin className="h-4 w-4" />
@@ -94,25 +118,85 @@ const WardProfile = () => {
               </span>
               <span className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                {ward.population.toLocaleString()} residents
+                {wardWithAQI.population.toLocaleString()} residents
               </span>
               <span className="flex items-center gap-1">
                 <Ruler className="h-4 w-4" />
-                {ward.area} sq km
+                {wardWithAQI.area} sq km
               </span>
             </div>
           </div>
 
-          <Card variant="pollution" className="p-6">
-            <div className="flex items-center gap-6">
-              <PollutionScore score={ward.pollutionScore} size="xl" />
-              <div className="space-y-2">
-                <div className="font-semibold">Overall Score</div>
-                <TrendIndicator value={ward.trend7Days} label="7 days" />
-                <TrendIndicator value={ward.trend30Days} label="30 days" />
+          <div className="flex flex-col gap-4">
+            <Card variant="pollution" className="p-6">
+              <div className="flex items-center gap-6">
+                <PollutionScore score={wardWithAQI.pollutionScore} size="xl" />
+                <div className="space-y-2">
+                  <div className="font-semibold">Overall Score</div>
+                  <TrendIndicator value={wardWithAQI.trend7Days} label="7 days" />
+                  <TrendIndicator value={wardWithAQI.trend30Days} label="30 days" />
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+            
+            {/* Live AQI Display - Always show if AQI is available */}
+            {wardWithAQI && (wardWithAQI.aqi !== undefined && wardWithAQI.aqi !== null) && (
+              <Card className="border-2 border-primary/20">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Gauge className="h-5 w-5 text-primary" />
+                      Air Quality Index (AQI)
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      {isUsingRealData && (
+                        <Badge variant="default" className="bg-success text-success-foreground">
+                          Live
+                        </Badge>
+                      )}
+                      <Button variant="ghost" size="icon" onClick={refetch} disabled={isLoading}>
+                        <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-6">
+                    <div className="text-center">
+                      <div className="text-5xl font-bold text-primary">{wardWithAQI.aqi}</div>
+                      <div className="text-sm text-muted-foreground mt-1">AQI</div>
+                    </div>
+                    <div className="flex-1">
+                      {(() => {
+                        const category = getAQICategory(wardWithAQI.aqi!);
+                        return (
+                          <div className={`p-4 rounded-lg ${category.bg}`}>
+                            <div className={`font-semibold text-lg ${category.color}`}>
+                              {category.label}
+                            </div>
+                            {wardWithAQI.pm25 && (
+                              <div className="text-sm text-muted-foreground mt-2">
+                                PM2.5: {wardWithAQI.pm25} µg/m³
+                              </div>
+                            )}
+                            {wardWithAQI.lastUpdated ? (
+                              <div className="text-xs text-muted-foreground mt-2">
+                                Updated: {new Date(wardWithAQI.lastUpdated).toLocaleString()}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-muted-foreground mt-2">
+                                Estimated from pollution score
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -158,7 +242,7 @@ const WardProfile = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {ward.sources.map((source) => (
+                  {wardWithAQI.sources.map((source) => (
                     <Badge key={source} variant="outline" className="py-2 px-4">
                       {source}
                     </Badge>
@@ -193,7 +277,7 @@ const WardProfile = () => {
                   <Lightbulb className="h-5 w-5 text-accent" />
                   Ward-Specific Actions You Can Take
                 </CardTitle>
-                <CardDescription>Practical steps to reduce pollution in {ward.name}</CardDescription>
+                <CardDescription>Practical steps to reduce pollution in {wardWithAQI.name}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
@@ -273,7 +357,7 @@ const WardProfile = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  How does Ward {ward.id} compare to other wards in {ward.zone}?
+                  How does Ward {wardWithAQI.id} compare to other wards in {wardWithAQI.zone}?
                 </p>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -282,7 +366,7 @@ const WardProfile = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>This Ward</span>
-                    <span className="font-medium">{ward.pollutionScore}</span>
+                    <span className="font-medium">{wardWithAQI.pollutionScore}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>City Average</span>

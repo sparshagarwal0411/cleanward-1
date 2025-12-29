@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { PollutionScore, TrendIndicator } from "@/components/PollutionScore";
 import { Ward } from "@/types";
 import { getStatusFromScore } from "@/data/wards";
-import { MapPin, Users, Ruler, ChevronRight } from "lucide-react";
+import { MapPin, Users, Ruler, ChevronRight, Gauge } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface WardCardProps {
@@ -66,6 +66,20 @@ export function WardCard({ ward, showDetails = true }: WardCardProps) {
             )}
           </div>
 
+          {ward.aqi !== undefined && ward.aqi !== null && (
+            <div className="flex items-center gap-2 text-sm">
+              <Gauge className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">AQI:</span>
+              <span className="font-semibold">{ward.aqi}</span>
+              {ward.pm25 && (
+                <>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-muted-foreground">PM2.5:</span>
+                  <span className="font-semibold">{ward.pm25} µg/m³</span>
+                </>
+              )}
+            </div>
+          )}
           <div className="flex items-center justify-between pt-2 border-t">
             <TrendIndicator value={ward.trend7Days} label="7 days" />
             <Button variant="ghost" size="sm" className="gap-1">

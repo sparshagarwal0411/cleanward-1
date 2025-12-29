@@ -13,6 +13,9 @@ export interface Ward {
     trend30Days: number;
     sources: string[];
     coordinates: { lat: number; lng: number };
+    aqi?: number; // Air Quality Index from WAQI API
+    pm25?: number; // PM2.5 value in µg/m³
+    lastUpdated?: string; // ISO timestamp of last update
   }
   
   export interface PollutionData {
