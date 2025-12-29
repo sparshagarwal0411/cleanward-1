@@ -47,12 +47,21 @@ const pollutionSources = [
 
 export const generateWards = (): Ward[] => {
   const wards: Ward[] = [];
-  
+
   for (let i = 1; i <= 250; i++) {
     const baseNameIndex = (i - 1) % wardNames.length;
     const zoneIndex = Math.floor((i - 1) / 23) % zones.length;
-    
-    const pollutionScore = Math.floor(Math.random() * 100) + 1;
+
+    // Generate realistic Delhi AQI (Winter levels are typically 200-500)
+    // Base AQI around 300 with variation
+    const baseAQI = 250 + Math.random() * 200;
+    const aqi = Math.floor(baseAQI);
+
+    // Calculate score based on AQI (Higher AQI = Lower Score)
+    // 0-50 AQI = 100 Score
+    // 500 AQI = 0 Score
+    let pollutionScore = Math.max(0, 100 - Math.floor((aqi / 500) * 100));
+
     const sourceCount = Math.floor(Math.random() * 4) + 2;
     const selectedSources = pollutionSources
       .sort(() => Math.random() - 0.5)
@@ -64,11 +73,12 @@ export const generateWards = (): Ward[] => {
       zone: zones[zoneIndex],
       population: Math.floor(Math.random() * 80000) + 20000,
       area: parseFloat((Math.random() * 8 + 2).toFixed(2)),
-      pollutionScore,
-      airQuality: Math.floor(Math.random() * 100) + 1,
-      waterQuality: Math.floor(Math.random() * 100) + 1,
-      wasteManagement: Math.floor(Math.random() * 100) + 1,
-      noiseLevel: Math.floor(Math.random() * 100) + 1,
+      pollutionScore, // 0-100 score (higher is better)
+      aqi: aqi, // Actual AQI value (higher is worse)
+      airQuality: Math.floor(Math.random() * 100) + 1, // Component score
+      waterQuality: Math.floor(Math.random() * 100) + 1, // Component score
+      wasteManagement: Math.floor(Math.random() * 100) + 1, // Component score
+      noiseLevel: Math.floor(Math.random() * 100) + 1, // Component score
       trend7Days: parseFloat((Math.random() * 20 - 10).toFixed(1)),
       trend30Days: parseFloat((Math.random() * 30 - 15).toFixed(1)),
       sources: selectedSources,
@@ -78,7 +88,7 @@ export const generateWards = (): Ward[] => {
       }
     });
   }
-  
+
   return wards;
 };
 
@@ -90,7 +100,7 @@ export const getWardById = (id: number): Ward | undefined => {
 
 export const searchWards = (query: string): Ward[] => {
   const lowercaseQuery = query.toLowerCase();
-  return wards.filter(w => 
+  return wards.filter(w =>
     w.name.toLowerCase().includes(lowercaseQuery) ||
     w.id.toString().includes(query) ||
     w.zone.toLowerCase().includes(lowercaseQuery)
@@ -114,4 +124,12 @@ export const getStatusLabel = (status: string): string => {
     hazardous: 'Hazardous'
   };
   return labels[status] || status;
+};
+
+export const getWardColor = (score: number) => {
+  if (score >= 80) return "bg-pollution-good";
+  if (score >= 60) return "bg-pollution-moderate";
+  if (score >= 40) return "bg-pollution-unhealthy";
+  if (score >= 20) return "bg-pollution-severe";
+  return "bg-pollution-hazardous";
 };

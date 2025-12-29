@@ -18,6 +18,7 @@ const AuthPage = () => {
   const [sex, setSex] = useState<"male" | "female" | "other" | "">("");
   const [gender, setGender] = useState("");
   const [showConfigWarning, setShowConfigWarning] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -30,7 +31,7 @@ const AuthPage = () => {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
@@ -58,17 +59,21 @@ const AuthPage = () => {
         // Type assertion needed due to TypeScript inference issues with Supabase types
         const profile = userProfile as { role: "citizen" | "admin" } | null;
         const userRole = profile?.role || userType;
-        
+
         toast({
           title: "Login Successful",
           description: "Welcome back to CleanWard!",
         });
-        
-        navigate(userRole === "admin" ? "/authority" : "/citizen");
+
+        // Success Transition
+        setShowSuccess(true);
+        setTimeout(() => {
+          navigate(userRole === "admin" ? "/authority" : "/citizen");
+        }, 2000);
       }
     } catch (error: any) {
       let errorMessage = error.message || "Invalid email or password";
-      
+
       // Provide helpful error messages for common issues
       if (error.message?.includes("Invalid API key") || error.message?.includes("JWT") || error.message?.includes("Invalid token")) {
         errorMessage = "Invalid Supabase API key or wrong project. Make sure your .env file points to the project with the users table (authentication project), not the AQI/pollution data project.";
@@ -79,20 +84,19 @@ const AuthPage = () => {
       } else if (error.message?.includes("relation") && error.message?.includes("does not exist")) {
         errorMessage = "Users table not found. Make sure you're using the correct Supabase project (the one with authentication and users table), and that migrations have been run.";
       }
-      
+
       toast({
         title: "Login Failed",
         description: errorMessage,
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Only stop loading on error, keep loading true on success for transition
     }
   };
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Check if Supabase is configured
     if (!isSupabaseConfigured()) {
       toast({
@@ -104,7 +108,7 @@ const AuthPage = () => {
     }
 
     setIsLoading(true);
-    
+
     const formData = new FormData(e.currentTarget);
     const firstName = formData.get("firstName") as string;
     const lastName = formData.get("lastName") as string;
@@ -198,7 +202,7 @@ const AuthPage = () => {
       if (authData.user) {
         // Wait a moment for the session to be established
         await new Promise(resolve => setTimeout(resolve, 300));
-        
+
         // Refresh the session to ensure it's properly set for RLS
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
@@ -224,7 +228,7 @@ const AuthPage = () => {
         } catch (functionError: any) {
           // If function doesn't exist or fails, try direct insert
           console.log("Function not available, using direct insert");
-          
+
           const { error: profileError } = await supabase
             .from("users")
             .insert({
@@ -247,13 +251,13 @@ const AuthPage = () => {
           title: "Registration Successful",
           description: "Your account has been created. Welcome to CleanWard!",
         });
-        
+
         navigate("/citizen");
       }
     } catch (error: any) {
       console.error("Registration error:", error);
       let errorMessage = error.message || "Failed to create account. Please try again.";
-      
+
       // Provide helpful error messages for common issues
       if (error.message?.includes("Invalid API key") || error.message?.includes("JWT") || error.message?.includes("Invalid token")) {
         errorMessage = "Invalid Supabase API key. Please check your .env file and ensure VITE_SUPABASE_ANON_KEY is set correctly. See SUPABASE_SETUP.md for help.";
@@ -266,7 +270,7 @@ const AuthPage = () => {
       } else if (error.message?.includes("duplicate key") || error.message?.includes("unique constraint")) {
         errorMessage = "An account with this email already exists. Please try logging in instead.";
       }
-      
+
       toast({
         title: "Registration Failed",
         description: errorMessage,
@@ -276,6 +280,20 @@ const AuthPage = () => {
       setIsLoading(false);
     }
   };
+
+  if (showSuccess) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center animate-in fade-in duration-500">
+        <div className="flex flex-col items-center gap-4 animate-in zoom-in-50 duration-500 delay-150">
+          <div className="h-24 w-24 bg-green-500 rounded-full flex items-center justify-center shadow-2xl shadow-green-500/20">
+            <Leaf className="h-12 w-12 text-white animate-bounce" />
+          </div>
+          <h2 className="text-3xl font-heading font-bold mt-4 animate-in slide-in-from-bottom-4 duration-700 delay-300">Welcome to CleanWard</h2>
+          <p className="text-muted-foreground animate-in slide-in-from-bottom-4 duration-700 delay-500">Setting up your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Layout showFooter={false}>

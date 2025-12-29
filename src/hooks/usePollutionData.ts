@@ -63,7 +63,7 @@ export function usePollutionData() {
 
     try {
       console.log('Fetching real pollution data directly from WAQI API...');
-      
+
       // Delhi NCR stations
       const delhiStations = [
         { name: 'ITO Delhi', id: '@7030' },
@@ -88,19 +88,19 @@ export function usePollutionData() {
       const stationPromises = delhiStations.map(async (station) => {
         try {
           const apiUrl = `${WAQI_API_BASE}/feed/${station.id}/?token=${WAQI_TOKEN}`;
-          
+
           // Use CORS proxy to bypass browser CORS restrictions
           const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
-          
+
           const response = await fetch(proxyUrl, {
             headers: { 'Accept': 'application/json' },
             mode: 'cors'
           });
-          
+
           if (response.ok) {
             const proxyData = await response.json();
             const data = JSON.parse(proxyData.contents);
-            
+
             if (data.status === 'ok' && data.data) {
               return {
                 name: station.name,
@@ -130,14 +130,14 @@ export function usePollutionData() {
       if (validStations.length > 0) {
         avgAQI = Math.round(validStations.reduce((sum, s) => sum + s.aqi, 0) / validStations.length);
         const pm25Stations = validStations.filter(s => s.pm25 !== null);
-        avgPM25 = pm25Stations.length > 0 
+        avgPM25 = pm25Stations.length > 0
           ? Math.round(pm25Stations.reduce((sum, s) => sum + (s.pm25 || 0), 0) / pm25Stations.length)
           : Math.round(avgAQI * 1.2);
       } else {
-        // Fallback to typical Delhi winter pollution levels
+        // Fallback to typical Delhi winter pollution levels (Severe)
         console.log('Using fallback data - typical Delhi pollution levels');
-        avgAQI = 220;
-        avgPM25 = 180;
+        avgAQI = 350;
+        avgPM25 = 280;
       }
 
       // AQI to score conversion
@@ -151,7 +151,7 @@ export function usePollutionData() {
 
       // Generate ward-level data based on station data
       const zones = ['North', 'South', 'East', 'West', 'Central', 'North East', 'North West', 'South East', 'South West', 'Shahdara', 'New Delhi', 'Najafgarh'];
-      
+
       const wardData: WardPollutionData[] = [];
       for (let i = 1; i <= 250; i++) {
         // Create variation based on ward location
@@ -263,7 +263,7 @@ export function usePollutionData() {
       });
 
       console.log(`Updated wards with AQI. Sample:`, updatedWards.slice(0, 3).map(w => ({ id: w.id, aqi: w.aqi, score: w.pollutionScore })));
-      
+
       setWards(updatedWards);
       setStations(response.stations);
       setAvgPM25(response.avgPM25);

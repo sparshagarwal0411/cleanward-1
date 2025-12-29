@@ -6,15 +6,15 @@ import { WardSearch } from "@/components/WardSearch";
 import { WardCard } from "@/components/WardCard";
 import { usePollutionData } from "@/hooks/usePollutionData";
 import { Ward } from "@/types";
-import { 
-  Map as MapIcon, 
-  Grid, 
-  List, 
-  ZoomIn, 
-  ZoomOut, 
-  RefreshCw, 
-  Wifi, 
-  WifiOff, 
+import {
+  Map as MapIcon,
+  Grid,
+  List,
+  ZoomIn,
+  ZoomOut,
+  RefreshCw,
+  Wifi,
+  WifiOff,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -31,6 +31,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { getStatusFromScore, getStatusLabel, getWardColor } from "@/data/wards";
 
 type SortOption = 'aqi-desc' | 'aqi-asc' | 'alphabetical' | 'id-asc' | 'id-desc' | 'score-desc' | 'score-asc';
 
@@ -47,7 +54,7 @@ export function DelhiMap() {
 
   // Filter by zone
   const filteredWards = useMemo(() => {
-    let filtered = selectedZone 
+    let filtered = selectedZone
       ? wards.filter((w: Ward) => w.zone === selectedZone)
       : wards;
 
@@ -94,20 +101,14 @@ export function DelhiMap() {
     setCurrentPage(1);
   };
 
-  const getWardColor = (score: number) => {
-    if (score >= 80) return "bg-pollution-good";
-    if (score >= 60) return "bg-pollution-moderate";
-    if (score >= 40) return "bg-pollution-unhealthy";
-    if (score >= 20) return "bg-pollution-severe";
-    return "bg-pollution-hazardous";
-  };
+
 
   return (
     <div className="space-y-6">
       {/* Search and Controls */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <WardSearch />
-        
+
         <div className="flex items-center gap-2">
           <Button
             variant={viewMode === "grid" ? "secondary" : "ghost"}
@@ -126,46 +127,7 @@ export function DelhiMap() {
         </div>
       </div>
 
-      {/* Zone Filter and Sorting */}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={selectedZone === null ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => handleZoneChange(null)}
-          >
-            All Zones
-          </Button>
-          {zones.map((zone: string) => (
-            <Button
-              key={zone}
-              variant={selectedZone === zone ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => handleZoneChange(zone)}
-            >
-              {zone}
-            </Button>
-          ))}
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Select value={sortOption} onValueChange={handleSortChange}>
-            <SelectTrigger className="w-[200px]">
-              <ArrowUpDown className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Sort by..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="id-asc">Ward ID (Ascending)</SelectItem>
-              <SelectItem value="id-desc">Ward ID (Descending)</SelectItem>
-              <SelectItem value="aqi-desc">AQI (Highest First)</SelectItem>
-              <SelectItem value="aqi-asc">AQI (Lowest First)</SelectItem>
-              <SelectItem value="score-desc">Score (Best First)</SelectItem>
-              <SelectItem value="score-asc">Score (Worst First)</SelectItem>
-              <SelectItem value="alphabetical">Alphabetical</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+
 
       {/* Interactive Map Visualization */}
       <Card className="overflow-hidden">
@@ -269,40 +231,69 @@ export function DelhiMap() {
                 </Button>
               </div>
             </div>
-            
-            <div className="grid grid-cols-10 md:grid-cols-16 lg:grid-cols-20 gap-1">
-              {currentWards.map((ward) => (
-                <button
-                  key={ward.id}
-                  className={`
-                    aspect-square rounded-sm transition-all duration-200 
-                    ${getWardColor(ward.pollutionScore)}
-                    hover:scale-110 hover:z-10 hover:shadow-lg
-                    ${hoveredWard?.id === ward.id ? 'ring-2 ring-primary scale-110 z-10' : ''}
-                    flex items-center justify-center text-white text-[8px] md:text-[10px] font-bold
-                    shadow-sm
-                  `}
-                  onMouseEnter={() => setHoveredWard(ward)}
-                  onMouseLeave={() => setHoveredWard(null)}
-                  onClick={() => window.location.href = `/ward/${ward.id}`}
-                  title={`Ward ${ward.id}: ${ward.name}`}
-                >
-                  {ward.id}
-                </button>
-              ))}
-            </div>
 
-            {/* Hovered Ward Info */}
-            {hoveredWard && (
-              <div className="absolute bottom-4 left-4 bg-card border rounded-lg p-3 shadow-lg animate-fade-in">
-                <div className="font-semibold">Ward {hoveredWard.id}</div>
-                <div className="text-sm text-muted-foreground">{hoveredWard.name}</div>
-                <div className="text-sm text-muted-foreground">{hoveredWard.zone}</div>
-                <div className={`mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getWardColor(hoveredWard.pollutionScore)} text-white`}>
-                  Score: {hoveredWard.pollutionScore}
-                </div>
-              </div>
-            )}
+            <div className="grid grid-cols-10 md:grid-cols-16 lg:grid-cols-20 gap-1">
+              {currentWards.map((ward) => {
+                const status = getStatusFromScore(ward.pollutionScore);
+                const statusLabel = getStatusLabel(status);
+                // Use explicit AQI if available, otherwise estimate from score for display consistency
+                const displayAQI = ward.aqi || (ward.pollutionScore < 20 ? 400 : ward.pollutionScore < 40 ? 300 : ward.pollutionScore < 60 ? 150 : ward.pollutionScore < 80 ? 80 : 40);
+
+                return (
+                  <Tooltip key={ward.id} delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <button
+                        className={`
+                          aspect-square rounded-sm transition-all duration-200 
+                          ${getWardColor(ward.pollutionScore)}
+                          hover:scale-110 hover:z-10 hover:shadow-lg
+                          ${hoveredWard?.id === ward.id ? 'ring-2 ring-primary scale-110 z-10' : ''}
+                          flex items-center justify-center text-white text-[8px] md:text-[10px] font-bold
+                          shadow-sm cursor-pointer
+                        `}
+                        onMouseEnter={() => setHoveredWard(ward)}
+                        onMouseLeave={() => setHoveredWard(null)}
+                        onClick={() => window.location.href = `/ward/${ward.id}`}
+                      >
+                        {ward.id}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="p-0 border-none shadow-xl">
+                      <div className="w-48 overflow-hidden rounded-md bg-card">
+                        {/* Status Banner */}
+                        <div className={`px-3 py-2 text-white font-bold flex justify-between items-center ${getWardColor(ward.pollutionScore)}`}>
+                          <span>{statusLabel}</span>
+                          <span className="text-xs opacity-90">Ward {ward.id}</span>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-3 bg-background text-foreground text-center">
+                          <div className="text-sm font-medium truncate mb-1" title={ward.name}>
+                            {ward.name}
+                          </div>
+
+                          <div className="flex items-baseline justify-center gap-1 mt-2">
+                            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">AQI</span>
+                            <span className={`text-3xl font-bold ${displayAQI > 300 ? 'text-pollution-hazardous' :
+                              displayAQI > 200 ? 'text-pollution-severe' :
+                                displayAQI > 100 ? 'text-pollution-unhealthy' :
+                                  'text-pollution-moderate'
+                              }`}>
+                              {displayAQI}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 text-xs text-muted-foreground border-t pt-2 flex justify-between">
+                            <span>Score: {ward.pollutionScore}/100</span>
+                            <span>{ward.zone}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
 
             {/* Legend */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm">
@@ -331,81 +322,72 @@ export function DelhiMap() {
         </CardContent>
       </Card>
 
-      {/* Ward Grid */}
+      {/* Zone Filter and Sorting - Moved below grid as requested */}
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-muted/20 p-4 rounded-lg">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={selectedZone === null ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => handleZoneChange(null)}
+          >
+            All Zones
+          </Button>
+          {zones.map((zone: string) => (
+            <Button
+              key={zone}
+              variant={selectedZone === zone ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => handleZoneChange(zone)}
+            >
+              {zone}
+            </Button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Select value={sortOption} onValueChange={handleSortChange}>
+            <SelectTrigger className="w-[200px] bg-background">
+              <ArrowUpDown className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="id-asc">Ward ID (Ascending)</SelectItem>
+              <SelectItem value="id-desc">Ward ID (Descending)</SelectItem>
+              <SelectItem value="aqi-desc">AQI (Highest First)</SelectItem>
+              <SelectItem value="aqi-asc">AQI (Lowest First)</SelectItem>
+              <SelectItem value="score-desc">Score (Best First)</SelectItem>
+              <SelectItem value="score-asc">Score (Worst First)</SelectItem>
+              <SelectItem value="alphabetical">Alphabetical</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-heading text-lg font-semibold">
             {selectedZone ? `${selectedZone} Wards` : 'All Wards'} ({filteredWards.length})
             {sortOption !== 'id-asc' && (
               <span className="text-sm text-muted-foreground font-normal ml-2">
-                (Sorted by {sortOption === 'aqi-desc' ? 'AQI (High to Low)' : 
-                           sortOption === 'aqi-asc' ? 'AQI (Low to High)' :
-                           sortOption === 'alphabetical' ? 'Alphabetical' :
-                           sortOption === 'score-desc' ? 'Score (Best First)' :
-                           sortOption === 'score-asc' ? 'Score (Worst First)' :
-                           sortOption === 'id-desc' ? 'ID (Descending)' : 'ID (Ascending)'})
+                (Sorted by {sortOption === 'aqi-desc' ? 'AQI (High to Low)' :
+                  sortOption === 'aqi-asc' ? 'AQI (Low to High)' :
+                    sortOption === 'alphabetical' ? 'Alphabetical' :
+                      sortOption === 'score-desc' ? 'Score (Best First)' :
+                        sortOption === 'score-asc' ? 'Score (Worst First)' :
+                          sortOption === 'id-desc' ? 'ID (Descending)' : 'ID (Ascending)'})
               </span>
             )}
           </h3>
         </div>
 
-        <div className={viewMode === "grid" 
+        <div className={viewMode === "grid"
           ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
           : "space-y-3"
         }>
-          {currentWards.slice(0, 12).map((ward) => (
+          {filteredWards.map((ward) => (
             <WardCard key={ward.id} ward={ward} showDetails={viewMode === "grid"} />
           ))}
         </div>
-
-        {/* Pagination for Ward Grid */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={currentPage === pageNum ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(pageNum)}
-                    className="min-w-[40px]"
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );
