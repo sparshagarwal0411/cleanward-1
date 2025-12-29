@@ -70,12 +70,14 @@ const AuthPage = () => {
       let errorMessage = error.message || "Invalid email or password";
       
       // Provide helpful error messages for common issues
-      if (error.message?.includes("Invalid API key") || error.message?.includes("JWT")) {
-        errorMessage = "Invalid Supabase API key. Please check your .env file and ensure VITE_SUPABASE_ANON_KEY is set correctly. See SUPABASE_SETUP.md for help.";
+      if (error.message?.includes("Invalid API key") || error.message?.includes("JWT") || error.message?.includes("Invalid token")) {
+        errorMessage = "Invalid Supabase API key or wrong project. Make sure your .env file points to the project with the users table (authentication project), not the AQI/pollution data project.";
       } else if (error.message?.includes("Invalid login credentials")) {
         errorMessage = "Invalid email or password. Please check your credentials.";
       } else if (error.message?.includes("Email not confirmed")) {
         errorMessage = "Please check your email and confirm your account before logging in.";
+      } else if (error.message?.includes("relation") && error.message?.includes("does not exist")) {
+        errorMessage = "Users table not found. Make sure you're using the correct Supabase project (the one with authentication and users table), and that migrations have been run.";
       }
       
       toast({

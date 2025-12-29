@@ -19,8 +19,16 @@ if (!hasCredentials) {
 }
 
 // Use environment variables or placeholder (will fail on API calls but won't crash the app)
-const url = supabaseUrl || 'https://placeholder.supabase.co';
-const key = supabaseAnonKey || 'placeholder-key';
+// Remove quotes if present in env vars
+const url = (supabaseUrl || 'https://placeholder.supabase.co').replace(/^["']|["']$/g, '');
+const key = (supabaseAnonKey || 'placeholder-key').replace(/^["']|["']$/g, '');
+
+// Log which project is being used (for debugging)
+if (import.meta.env.DEV && hasCredentials) {
+  const projectId = url.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || 'unknown';
+  console.log('🔗 Using Supabase project:', projectId);
+  console.log('📍 URL:', url);
+}
 
 export const supabase = createClient<Database>(url, key);
 

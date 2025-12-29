@@ -52,12 +52,31 @@ export function usePollutionData() {
     setError(null);
 
     try {
-      console.log('Fetching real pollution data from OpenAQ...');
+      console.log('Fetching real pollution data from Supabase Edge Function...');
       
+      // Invoke the Edge Function
+      // The Supabase client automatically adds authorization header with anon key
       const { data, error: funcError } = await supabase.functions.invoke('fetch-pollution-data');
 
       if (funcError) {
         console.error('Edge function error:', funcError);
+        
+        // Provide helpful error messages
+        if (funcError.message?.includes('not found') || funcError.message?.includes('NOT_FOUND')) {
+          console.warn('⚠️ Edge Function "fetch-pollution-data" is not deployed yet.');
+          console.warn('💡 Deploy it using: supabase functions deploy fetch-pollution-data');
+          console.warn('💡 Or create it in Supabase Dashboard → Edge Functions');
+          throw new Error('Edge Function not deployed. Please deploy fetch-pollution-data to your Supabase project.');
+        }
+        
+        if (funcError.message?.includes('authorization') || funcError.message?.includes('401')) {
+          console.error('⚠️ Authorization error. Make sure:');
+          console.error('1. Your .env file has VITE_SUPABASE_ANON_KEY set correctly');
+          console.error('2. The anon key matches your Supabase project');
+          console.error('3. Restart your dev server after updating .env');
+          throw new Error('Authorization failed. Please check your Supabase credentials in .env file.');
+        }
+        
         throw new Error(funcError.message);
       }
 
