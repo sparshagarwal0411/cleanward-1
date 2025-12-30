@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Leaf, LogIn, UserPlus, Shield, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { WardSelector } from "@/components/WardSelector";
 
 const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,6 +20,7 @@ const AuthPage = () => {
   const [gender, setGender] = useState("");
   const [showConfigWarning, setShowConfigWarning] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [wardNumberStr, setWardNumberStr] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -437,11 +439,13 @@ const AuthPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="wardNumber">Ward Number</Label>
-                      <Input id="wardNumber" name="wardNumber" type="number" placeholder="Enter your ward number (1-250)" min="1" max="250" required />
-                      <p className="text-xs text-muted-foreground">
-                        Don't know your ward? <Link to="/map" className="text-primary hover:underline">Find it on the map</Link>
-                      </p>
+                      <Label>Ward</Label>
+                      <WardSelector
+                        value={wardNumberStr ? parseInt(wardNumberStr) : undefined}
+                        onChange={(val) => setWardNumberStr(val.toString())}
+                      />
+                      {/* Hidden input to ensure FormData picks it up */}
+                      <input type="hidden" name="wardNumber" value={wardNumberStr} />
                     </div>
 
                     <div className="space-y-2">

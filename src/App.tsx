@@ -14,13 +14,12 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-import { LoadingScreen } from "@/components/LoadingScreen";
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="light" storageKey="cleanward-theme">
       <TooltipProvider>
-        <LoadingScreen />
         <Toaster />
         <Sonner />
         <BrowserRouter>

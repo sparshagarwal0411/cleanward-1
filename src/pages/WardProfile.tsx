@@ -8,14 +8,14 @@ import { PollutionScore, TrendIndicator } from "@/components/PollutionScore";
 import { getWardById, getStatusFromScore, getStatusLabel } from "@/data/wards";
 import { usePollutionData } from "@/hooks/usePollutionData";
 import { Ward } from "@/types";
-import { 
-  ArrowLeft, 
-  MapPin, 
-  Users, 
-  Ruler, 
-  Wind, 
-  Droplets, 
-  Trash2, 
+import {
+  ArrowLeft,
+  MapPin,
+  Users,
+  Ruler,
+  Wind,
+  Droplets,
+  Trash2,
   Volume2,
   AlertTriangle,
   Lightbulb,
@@ -26,6 +26,8 @@ import {
   Gauge
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { TrafficIndicator } from "@/components/TrafficIndicator";
+
 
 const WardProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,8 +35,11 @@ const WardProfile = () => {
   const ward = getWardById(wardId);
   const { wards, isLoading, refetch, isUsingRealData } = usePollutionData();
   const [wardWithAQI, setWardWithAQI] = useState<Ward | undefined>(ward);
-  
+
   useEffect(() => {
+    // Reset scroll to top when ward changes
+    window.scrollTo(0, 0);
+
     const updatedWard = wards.find(w => w.id === wardId);
     if (updatedWard) {
       setWardWithAQI(updatedWard);
@@ -109,6 +114,7 @@ const WardProfile = () => {
             <div className="flex items-center gap-3 mb-2">
               <Badge variant="outline" className="text-sm">Ward {ward.id}</Badge>
               <Badge variant="secondary">{ward.zone}</Badge>
+              {ward.trafficStatus && <TrafficIndicator status={ward.trafficStatus} />}
             </div>
             <h1 className="text-3xl font-heading font-bold mb-2">{wardWithAQI.name}</h1>
             <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
@@ -138,7 +144,7 @@ const WardProfile = () => {
                 </div>
               </div>
             </Card>
-            
+
             {/* Live AQI Display - Always show if AQI is available */}
             {wardWithAQI && (wardWithAQI.aqi !== undefined && wardWithAQI.aqi !== null) && (
               <Card className="border-2 border-primary/20">

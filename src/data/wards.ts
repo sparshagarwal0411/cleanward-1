@@ -82,6 +82,7 @@ export const generateWards = (): Ward[] => {
       trend7Days: parseFloat((Math.random() * 20 - 10).toFixed(1)),
       trend30Days: parseFloat((Math.random() * 30 - 15).toFixed(1)),
       sources: selectedSources,
+      trafficStatus: Math.random() > 0.7 ? 'heavy' : Math.random() > 0.4 ? 'moderate' : 'low',
       coordinates: {
         lat: 28.5 + Math.random() * 0.4,
         lng: 76.9 + Math.random() * 0.5

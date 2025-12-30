@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AnnouncementBar } from "@/components/AnnouncementBar";
+import { FloatingActionButtons } from "@/components/FloatingActionButtons";
 
 interface LayoutProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ export function Layout({ children, showFooter = true }: LayoutProps) {
       <AnnouncementBar />
       <main className="flex-1">{children}</main>
       {showFooter && <Footer />}
+      <FloatingActionButtons />
     </div>
   );
 }

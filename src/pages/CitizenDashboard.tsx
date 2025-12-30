@@ -11,13 +11,13 @@ import { getWardById, getStatusFromScore } from "@/data/wards";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePollutionData } from "@/hooks/usePollutionData";
-import { 
-  User, 
-  MapPin, 
-  Target, 
-  TreeDeciduous, 
-  Trash2, 
-  Droplets, 
+import {
+  User,
+  MapPin,
+  Target,
+  TreeDeciduous,
+  Trash2,
+  Droplets,
   BookOpen,
   Play,
   CheckCircle,
@@ -26,8 +26,32 @@ import {
   Calendar,
   TrendingUp,
   Gauge,
-  RefreshCw
+  RefreshCw,
+  LogOut,
+  Settings
 } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+import { WardSelector } from "@/components/WardSelector";
+import { TrafficIndicator } from "@/components/TrafficIndicator";
 
 interface UserData {
   id: string;
@@ -73,12 +97,57 @@ const CitizenDashboard = () => {
   const { toast } = useToast();
   const { wards, isLoading: pollutionLoading, refetch, isUsingRealData } = usePollutionData();
 
+  const [isChangeWardOpen, setIsChangeWardOpen] = useState(false);
+  const [newWardNumber, setNewWardNumber] = useState("");
+  const [updatingWard, setUpdatingWard] = useState(false);
+
+  const handleUpdateWard = async () => {
+    if (!userData) return;
+
+    const wardNum = parseInt(newWardNumber);
+    if (isNaN(wardNum) || wardNum < 1 || wardNum > 250) {
+      toast({
+        title: "Invalid Ward Number",
+        description: "Please enter a valid ward number between 1 and 250",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUpdatingWard(true);
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ ward_number: wardNum } as any)
+        .eq("id", userData.id);
+
+      if (error) throw error;
+
+      setUserData({ ...userData, ward_number: wardNum });
+      setIsChangeWardOpen(false);
+
+      toast({
+        title: "Ward Updated",
+        description: `Your ward has been updated to Ward ${wardNum}`,
+      });
+    } catch (error) {
+      console.error("Error updating ward:", error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update ward number. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingWard(false);
+    }
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         // Get current session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError || !session) {
           toast({
             title: "Authentication Required",
@@ -136,8 +205,8 @@ const CitizenDashboard = () => {
   };
 
   const toggleGoal = (goalId: string) => {
-    setSelectedGoals(prev => 
-      prev.includes(goalId) 
+    setSelectedGoals(prev =>
+      prev.includes(goalId)
         ? prev.filter(id => id !== goalId)
         : [...prev, goalId]
     );
@@ -185,20 +254,71 @@ const CitizenDashboard = () => {
               Track your progress and take action for a cleaner {ward?.name || "ward"}
             </p>
           </div>
-          <Card className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <div className="font-semibold">{userName}</div>
-                <div className="text-sm text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  Ward {userData.ward_number}
+          <Dialog open={isChangeWardOpen} onOpenChange={setIsChangeWardOpen}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Card className="p-4 cursor-pointer hover:bg-accent/5 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">{userName}</div>
+                      <div className="text-sm text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        Ward {userData.ward_number}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => {
+                  setNewWardNumber(userData.ward_number.toString());
+                  setIsChangeWardOpen(true);
+                }}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Change Ward
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  supabase.auth.signOut().then(() => navigate("/auth"));
+                }} className="text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Change Ward</DialogTitle>
+                <DialogDescription>
+                  Enter your new ward number (1-250) to update your location.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="ward" className="text-right">
+                    Ward
+                  </Label>
+                  <div className="col-span-3">
+                    <WardSelector
+                      value={newWardNumber ? parseInt(newWardNumber) : undefined}
+                      onChange={(val) => setNewWardNumber(val.toString())}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsChangeWardOpen(false)}>Cancel</Button>
+                <Button onClick={handleUpdateWard} disabled={updatingWard}>
+                  {updatingWard ? "Updating..." : "Save Changes"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -213,7 +333,12 @@ const CitizenDashboard = () => {
                       <MapPin className="h-5 w-5 text-primary" />
                       Your Ward: {ward.name}
                     </CardTitle>
-                    <CardDescription>Current pollution status and trends</CardDescription>
+                    <div className="flex items-center justify-between">
+                      <CardDescription>Current pollution status and trends</CardDescription>
+                      {ward.trafficStatus && (
+                        <TrafficIndicator status={ward.trafficStatus} className="scale-90 origin-right" />
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-col md:flex-row gap-6 items-center">
@@ -366,8 +491,8 @@ const CitizenDashboard = () => {
                   {educationalVideos.map((video) => (
                     <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
                       <div className="relative">
-                        <img 
-                          src={video.thumbnail} 
+                        <img
+                          src={video.thumbnail}
                           alt={video.title}
                           className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -402,11 +527,10 @@ const CitizenDashboard = () => {
                     <Card key={action.step} className={action.completed ? "border-success/30 bg-success/5" : ""}>
                       <CardContent className="py-4">
                         <div className="flex items-start gap-4">
-                          <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            action.completed 
-                              ? "bg-success text-success-foreground" 
-                              : "bg-muted text-muted-foreground"
-                          }`}>
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${action.completed
+                            ? "bg-success text-success-foreground"
+                            : "bg-muted text-muted-foreground"
+                            }`}>
                             {action.completed ? (
                               <CheckCircle className="h-5 w-5" />
                             ) : (

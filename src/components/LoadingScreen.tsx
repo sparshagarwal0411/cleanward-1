@@ -5,11 +5,20 @@ export const LoadingScreen = ({ onComplete }: { onComplete?: () => void }) => {
     const [show, setShow] = useState(true);
 
     useEffect(() => {
+        // Prevent scrolling while loading
+        document.body.style.overflow = "hidden";
+
         const timer = setTimeout(() => {
             setShow(false);
+            // Re-enable scrolling
+            document.body.style.overflow = "unset";
             if (onComplete) onComplete();
-        }, 5000); // 5.0s total animation time (Slower as requested)
-        return () => clearTimeout(timer);
+        }, 5000); // 5.0s total animation time
+
+        return () => {
+            clearTimeout(timer);
+            document.body.style.overflow = "unset";
+        };
     }, [onComplete]);
 
     if (!show) return null;
