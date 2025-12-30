@@ -8,6 +8,9 @@ A comprehensive web application for monitoring and managing pollution data acros
 - **User Profiles**: Store user information including ward number, demographics, and preferences
 - **Ward Mapping**: Interactive map showing all 250 wards of Delhi with color-coded pollution levels
 - **Real-time Data**: Integration with pollution monitoring APIs (WAQI/OpenAQ) via Supabase Edge Functions
+- **AI Assistant**: Smart conversational AI powered by ElevenLabs to guide users and answer queries
+- **Traffic Analysis**: Real-time traffic congestion monitoring and visualization via Google Maps
+- **Community Engagement**: Tools for volunteering, NGO registration, and social sharing
 - **Ward Profiles**: Detailed information for each ward including:
   - Pollution breakdown (Air, Water, Waste, Noise)
   - Pollution sources identification
@@ -31,6 +34,8 @@ A comprehensive web application for monitoring and managing pollution data acros
 - **shadcn/ui** - High-quality React components
 - **Lucide React** - Icon library
 - **Recharts** - Data visualization
+- **Google Maps Platform** - Mapping & Traffic
+- **ElevenLabs** - AI Chatbot Integration
 
 ### Backend & Services
 - **Supabase** - Backend as a Service
@@ -40,6 +45,8 @@ A comprehensive web application for monitoring and managing pollution data acros
 - **TanStack Query** - Data fetching and caching
 
 ### APIs Used
+- **Google Maps Platform** (Maps JavaScript API)
+- **ElevenLabs ConvAI**
 - WAQI (World Air Quality Index) API
 - OpenAQ API (via Supabase Edge Functions)
 
@@ -81,6 +88,7 @@ A comprehensive web application for monitoring and managing pollution data acros
       ```env
       VITE_SUPABASE_URL=your_supabase_project_url
       VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+      VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
       ```
    
    > 📖 **Detailed instructions**: See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for step-by-step setup guide.
