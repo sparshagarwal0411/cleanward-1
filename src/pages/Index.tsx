@@ -7,15 +7,15 @@ import { WardSearch } from "@/components/WardSearch";
 import { StatCard } from "@/components/StatCard";
 import { Layout } from "@/components/Layout";
 import Snowfall from "react-snowfall";
-import { 
-  MapPin, 
-  Users, 
-  Building2, 
-  HeartHandshake, 
-  Leaf, 
-  Wind, 
-  Droplets, 
-  Trash2, 
+import {
+  MapPin,
+  Users,
+  Building2,
+  HeartHandshake,
+  Leaf,
+  Wind,
+  Droplets,
+  Trash2,
   Volume2,
   ArrowRight,
   CheckCircle,
@@ -37,7 +37,7 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden gradient-hero py-20 md:py-32">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
-        
+
         {/* Snowfall Effect */}
         <div className="absolute inset-0 z-0">
           <Snowfall
@@ -53,17 +53,17 @@ const Index = () => {
             radius={[0.5, 3]}
           />
         </div>
-        
+
         <div className="container relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <Badge variant="secondary" className="text-sm px-4 py-1.5">
               Government of NCT of Delhi Initiative
             </Badge>
-            
+
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-primary-foreground leading-tight text-balance">
               Ward-Wise Pollution Awareness & Action Dashboard
             </h1>
-            
+
             <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto font-body">
               Empowering Delhi's 250 wards with real-time pollution data, education, and actionable steps for cleaner communities.
             </p>
@@ -92,7 +92,7 @@ const Index = () => {
         {/* Wave decoration */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 50L60 45.7C120 41.3 240 32.7 360 32.3C480 32 600 40 720 48.3C840 56.7 960 65.3 1080 65C1200 64.7 1320 55.3 1380 50.7L1440 46V101H1380C1320 101 1200 101 1080 101C960 101 840 101 720 101C600 101 480 101 360 101C240 101 120 101 60 101H0V50Z" fill="hsl(var(--background))"/>
+            <path d="M0 50L60 45.7C120 41.3 240 32.7 360 32.3C480 32 600 40 720 48.3C840 56.7 960 65.3 1080 65C1200 64.7 1320 55.3 1380 50.7L1440 46V101H1380C1320 101 1200 101 1080 101C960 101 840 101 720 101C600 101 480 101 360 101C240 101 120 101 60 101H0V50Z" fill="hsl(var(--background))" />
           </svg>
         </div>
       </section>
@@ -110,21 +110,21 @@ const Index = () => {
             />
             <StatCard
               title="Citizens Engaged"
-              value="1.2M+"
+              value="50+"
               description="Active participants"
               icon={Users}
               variant="success"
             />
             <StatCard
               title="NGOs Registered"
-              value="450+"
+              value="10+"
               description="Partner organizations"
               icon={Building2}
               variant="warning"
             />
             <StatCard
               title="Actions Taken"
-              value="25K+"
+              value="10"
               description="This month"
               icon={HeartHandshake}
               variant="primary"
@@ -423,8 +423,8 @@ const Index = () => {
                 <h3 className="text-xl font-heading font-semibold">Our Mission</h3>
               </div>
               <p className="text-muted-foreground">
-                CleanWard is a government initiative by the NCT of Delhi to create a transparent, 
-                data-driven approach to pollution management. We empower citizens with real-time 
+                CleanWard is a government initiative by the NCT of Delhi to create a transparent,
+                data-driven approach to pollution management. We empower citizens with real-time
                 ward-level pollution data and actionable insights to drive community-led environmental action.
               </p>
             </Card>
@@ -437,8 +437,8 @@ const Index = () => {
                 <h3 className="text-xl font-heading font-semibold">Our Vision</h3>
               </div>
               <p className="text-muted-foreground">
-                To make Delhi one of the cleanest cities in India by fostering citizen participation, 
-                enabling data-driven policy decisions, and creating a collaborative ecosystem where 
+                To make Delhi one of the cleanest cities in India by fostering citizen participation,
+                enabling data-driven policy decisions, and creating a collaborative ecosystem where
                 every ward takes ownership of its environmental health.
               </p>
             </Card>
@@ -451,9 +451,9 @@ const Index = () => {
                 <h3 className="text-xl font-heading font-semibold">Who We Are</h3>
               </div>
               <p className="text-muted-foreground mb-4">
-                CleanWard is developed and maintained by the Delhi Municipal Corporation in partnership 
-                with the Delhi Pollution Control Committee (DPCC) and Central Pollution Control Board (CPCB). 
-                Our platform integrates data from multiple government sources to provide comprehensive 
+                CleanWard is developed and maintained by the Delhi Municipal Corporation in partnership
+                with the Delhi Pollution Control Committee (DPCC) and Central Pollution Control Board (CPCB).
+                Our platform integrates data from multiple government sources to provide comprehensive
                 pollution monitoring across all 250 wards of Delhi.
               </p>
               <div className="grid md:grid-cols-3 gap-4 mt-6">
@@ -498,9 +498,9 @@ const Index = () => {
                   What is CleanWard and how does it work?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  CleanWard is a government platform that provides real-time pollution data for all 250 wards 
-                  in Delhi. Citizens can search for their ward, view pollution scores across air, water, waste, 
-                  and noise categories, and access educational resources and action steps to improve their ward's 
+                  CleanWard is a government platform that provides real-time pollution data for all 250 wards
+                  in Delhi. Citizens can search for their ward, view pollution scores across air, water, waste,
+                  and noise categories, and access educational resources and action steps to improve their ward's
                   environmental health.
                 </AccordionContent>
               </AccordionItem>
@@ -510,8 +510,8 @@ const Index = () => {
                   How is the pollution data collected?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Our data comes from multiple trusted sources including the Central Pollution Control Board (CPCB), 
-                  Delhi Pollution Control Committee (DPCC), municipal records, and IoT sensors deployed across 
+                  Our data comes from multiple trusted sources including the Central Pollution Control Board (CPCB),
+                  Delhi Pollution Control Committee (DPCC), municipal records, and IoT sensors deployed across
                   Delhi. Data is updated in real-time and verified by government authorities.
                 </AccordionContent>
               </AccordionItem>
@@ -521,8 +521,8 @@ const Index = () => {
                   Do I need to register to use CleanWard?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  No, you can browse ward data, view the map, and access public information without registration. 
-                  However, creating a free account gives you access to personalized dashboards, goal tracking, 
+                  No, you can browse ward data, view the map, and access public information without registration.
+                  However, creating a free account gives you access to personalized dashboards, goal tracking,
                   educational videos, and the ability to track your environmental impact.
                 </AccordionContent>
               </AccordionItem>
@@ -532,9 +532,9 @@ const Index = () => {
                   How can I contribute to reducing pollution in my ward?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  There are multiple ways to contribute: join volunteer clean-up drives, participate in tree 
-                  plantation events, follow ward-specific action recommendations, report pollution incidents, 
-                  and spread awareness in your community. You can also make donations to support ward-level 
+                  There are multiple ways to contribute: join volunteer clean-up drives, participate in tree
+                  plantation events, follow ward-specific action recommendations, report pollution incidents,
+                  and spread awareness in your community. You can also make donations to support ward-level
                   initiatives through our platform.
                 </AccordionContent>
               </AccordionItem>
@@ -544,8 +544,8 @@ const Index = () => {
                   Is CleanWard free to use?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Yes, all basic features are completely free. Citizens can access pollution data, educational 
-                  content, and participate in community initiatives at no cost. We offer optional premium features 
+                  Yes, all basic features are completely free. Citizens can access pollution data, educational
+                  content, and participate in community initiatives at no cost. We offer optional premium features
                   for advanced analytics and priority support, but the core platform remains free for all citizens.
                 </AccordionContent>
               </AccordionItem>
@@ -555,9 +555,9 @@ const Index = () => {
                   How accurate is the pollution data?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Our data is sourced from government-certified monitoring stations and verified by environmental 
-                  authorities. We update data multiple times daily and use standardized measurement protocols 
-                  approved by CPCB and DPCC. However, pollution levels can vary within a ward, so data represents 
+                  Our data is sourced from government-certified monitoring stations and verified by environmental
+                  authorities. We update data multiple times daily and use standardized measurement protocols
+                  approved by CPCB and DPCC. However, pollution levels can vary within a ward, so data represents
                   average conditions.
                 </AccordionContent>
               </AccordionItem>
@@ -567,8 +567,8 @@ const Index = () => {
                   Can NGOs or organizations partner with CleanWard?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Absolutely! We welcome partnerships with NGOs, community organizations, and corporate entities. 
-                  Organizations can register through our platform to participate in clean-up drives, awareness 
+                  Absolutely! We welcome partnerships with NGOs, community organizations, and corporate entities.
+                  Organizations can register through our platform to participate in clean-up drives, awareness
                   campaigns, and implementation projects. Contact us through the "Register Your NGO" section for more information.
                 </AccordionContent>
               </AccordionItem>
@@ -578,8 +578,8 @@ const Index = () => {
                   How do I report a pollution issue in my area?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Once you're logged into your Citizen Dashboard, you can report pollution incidents directly 
-                  through the platform. Reports are forwarded to the relevant municipal authorities and 
+                  Once you're logged into your Citizen Dashboard, you can report pollution incidents directly
+                  through the platform. Reports are forwarded to the relevant municipal authorities and
                   tracked for resolution. You can also call our toll-free helpline at 1800-XXX-XXXX for urgent issues.
                 </AccordionContent>
               </AccordionItem>
@@ -754,7 +754,7 @@ const Index = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                CleanWard is a government initiative, but we operate on a sustainable model to ensure 
+                CleanWard is a government initiative, but we operate on a sustainable model to ensure
                 long-term operation and continuous improvement:
               </p>
               <div className="grid md:grid-cols-2 gap-4">
@@ -764,7 +764,7 @@ const Index = () => {
                     <h4 className="font-semibold">Government Funding</h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Core infrastructure and basic features are funded by the Delhi Municipal Corporation 
+                    Core infrastructure and basic features are funded by the Delhi Municipal Corporation
                     under the Swachh Bharat Mission.
                   </p>
                 </div>
@@ -774,7 +774,7 @@ const Index = () => {
                     <h4 className="font-semibold">Premium Subscriptions</h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Affordable premium plans (₹99/month) help fund advanced features, server costs, 
+                    Affordable premium plans (₹99/month) help fund advanced features, server costs,
                     and platform improvements.
                   </p>
                 </div>
@@ -784,7 +784,7 @@ const Index = () => {
                     <h4 className="font-semibold">Citizen Donations</h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Voluntary contributions from citizens directly support ward-level clean-up initiatives 
+                    Voluntary contributions from citizens directly support ward-level clean-up initiatives
                     and awareness campaigns.
                   </p>
                 </div>
@@ -794,15 +794,15 @@ const Index = () => {
                     <h4 className="font-semibold">Corporate Partnerships</h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    CSR partnerships with organizations help fund large-scale projects and infrastructure 
+                    CSR partnerships with organizations help fund large-scale projects and infrastructure
                     improvements.
                   </p>
                 </div>
               </div>
               <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
                 <p className="text-sm">
-                  <strong>100% Transparency:</strong> All revenue is used exclusively for platform 
-                  maintenance, data collection, and community initiatives. Financial reports are 
+                  <strong>100% Transparency:</strong> All revenue is used exclusively for platform
+                  maintenance, data collection, and community initiatives. Financial reports are
                   published quarterly on our official website.
                 </p>
               </div>

@@ -471,16 +471,26 @@ const AuthPage = () => {
             </CardContent>
           </Card>
 
-          {/* Admin Note */}
-          <Card className="mt-4 bg-muted/50">
+          {/* Testing Accounts Note */}
+          <Card className="mt-4 bg-muted/30 border-dashed">
             <CardContent className="py-4">
               <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium">Authority Access</p>
-                  <p className="text-muted-foreground">
-                    Government officials can login with their official credentials to access the analytics dashboard.
-                  </p>
+                <div className="text-sm w-full">
+                  <p className="font-semibold mb-2">Testing Accounts &rarr</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="font-medium text-xs uppercase tracking-wider text-muted-foreground">Citizen</p>
+                      <p className="font-bold text-primary">Citizen X</p>
+                      <p className="text-xs">Email: <span className="font-mono">sparshsparshaga@gmail.com</span></p>
+                      <p className="text-xs">Pass: <span className="font-mono">Citizen@123</span></p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-xs uppercase tracking-wider text-muted-foreground">Admin / Authority</p>
+                      <p className="font-bold text-primary">Admin Y</p>
+                      <p className="text-xs">Email: <span className="font-mono">agarwalsparsh9898@gmail.com</span></p>
+                      <p className="text-xs">Pass: <span className="font-mono">Admin@123</span></p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
