@@ -46,8 +46,8 @@ export function Footer() {
                 <Link to="/auth" className="hover:text-primary transition-colors">Login / Register</Link>
               </li>
               <li>
-                <button 
-                  onClick={() => scrollToSection('about')} 
+                <button
+                  onClick={() => scrollToSection('about')}
                   className="hover:text-primary transition-colors text-left flex items-center gap-1"
                 >
                   <Info className="h-3 w-3" />
@@ -55,8 +55,8 @@ export function Footer() {
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => scrollToSection('faqs')} 
+                <button
+                  onClick={() => scrollToSection('faqs')}
                   className="hover:text-primary transition-colors text-left flex items-center gap-1"
                 >
                   <HelpCircle className="h-3 w-3" />
@@ -64,8 +64,8 @@ export function Footer() {
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => scrollToSection('pricing')} 
+                <button
+                  onClick={() => scrollToSection('pricing')}
                   className="hover:text-primary transition-colors text-left flex items-center gap-1"
                 >
                   <IndianRupee className="h-3 w-3" />
@@ -79,24 +79,24 @@ export function Footer() {
             <h4 className="font-heading font-semibold">Get Involved</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <a href="#pricing" onClick={(e) => { e.preventDefault(); scrollToSection('pricing'); }} className="hover:text-primary transition-colors flex items-center gap-1">
+                <Link to="/volunteer" className="hover:text-primary transition-colors flex items-center gap-1">
                   Join as Volunteer <ExternalLink className="h-3 w-3" />
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#pricing" onClick={(e) => { e.preventDefault(); scrollToSection('pricing'); }} className="hover:text-primary transition-colors flex items-center gap-1">
+                <Link to="/ngo" className="hover:text-primary transition-colors flex items-center gap-1">
                   Register Your NGO <ExternalLink className="h-3 w-3" />
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#pricing" onClick={(e) => { e.preventDefault(); scrollToSection('pricing'); }} className="hover:text-primary transition-colors flex items-center gap-1">
+                <Link to="/partnership" className="hover:text-primary transition-colors flex items-center gap-1">
                   Partner with Municipality <ExternalLink className="h-3 w-3" />
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#pricing" onClick={(e) => { e.preventDefault(); scrollToSection('pricing'); }} className="hover:text-primary transition-colors flex items-center gap-1">
+                <Link to="/contribute" className="hover:text-primary transition-colors flex items-center gap-1">
                   Contribute to the Cause <ExternalLink className="h-3 w-3" />
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -125,7 +125,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>© 2025 CleanWard - Government of NCT of Delhi. All rights reserved.</p>
+          <p>© 2025 CleanWard - ParallaX. All rights reserved.</p>
           <p className="mt-1">
             An initiative under Swachh Bharat Mission | Data sourced from CPCB, DPCC & Municipal Records
           </p>

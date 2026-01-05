@@ -10,6 +10,11 @@ import WardProfile from "./pages/WardProfile";
 import AuthPage from "./pages/AuthPage";
 import CitizenDashboard from "./pages/CitizenDashboard";
 import AuthorityDashboard from "./pages/AuthorityDashboard";
+import ContributePage from "./pages/ContributePage";
+import VolunteerPage from "./pages/VolunteerPage";
+import NGOPage from "./pages/NGOPage";
+import PartnershipPage from "./pages/PartnershipPage";
+import PaymentPage from "./pages/PaymentPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +36,11 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/citizen" element={<CitizenDashboard />} />
             <Route path="/authority" element={<AuthorityDashboard />} />
+            <Route path="/contribute" element={<ContributePage />} />
+            <Route path="/volunteer" element={<VolunteerPage />} />
+            <Route path="/ngo" element={<NGOPage />} />
+            <Route path="/partnership" element={<PartnershipPage />} />
+            <Route path="/payment" element={<PaymentPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

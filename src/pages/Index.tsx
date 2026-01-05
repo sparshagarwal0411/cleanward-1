@@ -267,7 +267,9 @@ const Index = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="civic" className="w-full">Donate Now</Button>
+                <Link to="/contribute">
+                  <Button variant="civic" className="w-full">Donate Now</Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -282,7 +284,9 @@ const Index = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="civic-outline" className="w-full">Register</Button>
+                <Link to="/volunteer">
+                  <Button variant="civic-outline" className="w-full">Register</Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -297,7 +301,9 @@ const Index = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="civic-outline" className="w-full">Apply</Button>
+                <Link to="/ngo">
+                  <Button variant="civic-outline" className="w-full">Apply</Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -312,7 +318,9 @@ const Index = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="civic-outline" className="w-full">Learn More</Button>
+                <Link to="/partnership">
+                  <Button variant="civic-outline" className="w-full">Learn More</Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -690,7 +698,7 @@ const Index = () => {
                     <span className="text-sm">Ad-free experience</span>
                   </li>
                 </ul>
-                <Link to="/auth">
+                <Link to="/payment">
                   <Button variant="civic" className="w-full">Upgrade to Premium</Button>
                 </Link>
               </CardContent>
@@ -736,7 +744,7 @@ const Index = () => {
                     <span className="text-sm">API access for integration</span>
                   </li>
                 </ul>
-                <Link to="/auth">
+                <Link to="/partnership">
                   <Button variant="civic-outline" className="w-full">Contact Sales</Button>
                 </Link>
               </CardContent>

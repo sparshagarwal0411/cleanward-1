@@ -1,15 +1,16 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { 
-  Leaf, 
-  Menu, 
-  X, 
-  MapPin, 
-  LayoutDashboard, 
+import {
+  Leaf,
+  Menu,
+  X,
+  MapPin,
+  LayoutDashboard,
   Users,
   LogIn,
-  LogOut
+  LogOut,
+  IndianRupee
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +30,7 @@ export function Navbar() {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (session) {
           setIsAuthenticated(true);
           // Fetch user role
@@ -38,7 +39,7 @@ export function Navbar() {
             .select("role")
             .eq("id", session.user.id)
             .single();
-          
+
           if (profile && !profileError) {
             setUserRole((profile as { role: "citizen" | "admin" }).role);
           }
@@ -65,7 +66,7 @@ export function Navbar() {
         setUserRole(null);
         return;
       }
-      
+
       // Only set authenticated if we have a valid session
       if (session && session.user) {
         setIsAuthenticated(true);
@@ -100,18 +101,18 @@ export function Navbar() {
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     try {
       // Clear state first to prevent UI glitches
       setIsAuthenticated(false);
       setUserRole(null);
-      
+
       // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Sign out error:", error);
       }
-      
+
       // Navigate to home page
       navigate("/", { replace: true });
     } catch (error) {
@@ -130,13 +131,13 @@ export function Navbar() {
   ];
 
   // Dashboard link based on user role
-  const dashboardLink = isAuthenticated && userRole === "admin" 
+  const dashboardLink = isAuthenticated && userRole === "admin"
     ? { to: "/authority", label: "Authority Portal", icon: LayoutDashboard }
     : isAuthenticated && userRole === "citizen"
-    ? { to: "/citizen", label: "Citizen Dashboard", icon: Users }
-    : null;
+      ? { to: "/citizen", label: "Citizen Dashboard", icon: Users }
+      : null;
 
-  const navLinks = dashboardLink 
+  const navLinks = dashboardLink
     ? [...baseNavLinks, dashboardLink]
     : baseNavLinks;
 
@@ -168,10 +169,30 @@ export function Navbar() {
 
         <div className="hidden md:flex items-center gap-2">
           <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              const element = document.getElementById('pricing');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              } else {
+                navigate('/');
+                setTimeout(() => {
+                  const el = document.getElementById('pricing');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+              }
+            }}
+          >
+            <IndianRupee className="h-4 w-4" />
+            Pricing
+          </Button>
           {isAuthenticated ? (
-            <Button 
-              variant="civic-outline" 
-              size="sm" 
+            <Button
+              variant="civic-outline"
+              size="sm"
               className="gap-2"
               onClick={(e) => handleSignOut(e)}
               type="button"
@@ -222,8 +243,8 @@ export function Navbar() {
               </Link>
             ))}
             {isAuthenticated ? (
-              <Button 
-                variant="civic-outline" 
+              <Button
+                variant="civic-outline"
                 className="w-full gap-2 mt-2"
                 onClick={(e) => {
                   e.preventDefault();

@@ -30,13 +30,9 @@ const AuthPage = () => {
     }
   }, []);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const performLogin = async (email: string, password: string, explicitUserType?: "citizen" | "admin") => {
     setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const targetUserType = explicitUserType || userType;
 
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -60,7 +56,7 @@ const AuthPage = () => {
 
         // Type assertion needed due to TypeScript inference issues with Supabase types
         const profile = userProfile as { role: "citizen" | "admin" } | null;
-        const userRole = profile?.role || userType;
+        const userRole = profile?.role || targetUserType;
 
         toast({
           title: "Login Successful",
@@ -94,6 +90,15 @@ const AuthPage = () => {
       });
       setIsLoading(false); // Only stop loading on error, keep loading true on success for transition
     }
+  };
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    await performLogin(email, password);
   };
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -475,18 +480,29 @@ const AuthPage = () => {
           <Card className="mt-4 bg-muted/30 border-dashed">
             <CardContent className="py-4">
               <div className="flex items-start gap-3">
+                <Shield className="h-5 w-5 text-primary mt-0.5" />
                 <div className="text-sm w-full">
-                  <p className="font-semibold mb-2">Testing Accounts &rarr</p>
+                  <p className="font-semibold mb-2">Testing Accounts (Click names to auto-login)</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <p className="font-medium text-xs uppercase tracking-wider text-muted-foreground">Citizen</p>
-                      <p className="font-bold text-primary">Citizen X</p>
+                      <button
+                        onClick={() => performLogin("sparshsparshaga@gmail.com", "Citizen@123", "citizen")}
+                        className="font-bold text-primary hover:underline decoration-primary/30 underline-offset-4 text-left block"
+                      >
+                        Citizen X
+                      </button>
                       <p className="text-xs">Email: <span className="font-mono">sparshsparshaga@gmail.com</span></p>
                       <p className="text-xs">Pass: <span className="font-mono">Citizen@123</span></p>
                     </div>
                     <div className="space-y-1">
                       <p className="font-medium text-xs uppercase tracking-wider text-muted-foreground">Admin / Authority</p>
-                      <p className="font-bold text-primary">Admin Y</p>
+                      <button
+                        onClick={() => performLogin("agarwalsparsh9898@gmail.com", "Admin@123", "admin")}
+                        className="font-bold text-primary hover:underline decoration-primary/30 underline-offset-4 text-left block"
+                      >
+                        Admin Y
+                      </button>
                       <p className="text-xs">Email: <span className="font-mono">agarwalsparsh9898@gmail.com</span></p>
                       <p className="text-xs">Pass: <span className="font-mono">Admin@123</span></p>
                     </div>
