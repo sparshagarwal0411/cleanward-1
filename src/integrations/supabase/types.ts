@@ -26,6 +26,7 @@ export type Database = {
           gender: string | null
           ward_number: number
           role: 'citizen' | 'admin'
+          score: number
           created_at: string
           updated_at: string
         }
@@ -40,6 +41,7 @@ export type Database = {
           gender?: string | null
           ward_number: number
           role?: 'citizen' | 'admin'
+          score?: number
           created_at?: string
           updated_at?: string
         }
@@ -54,8 +56,76 @@ export type Database = {
           gender?: string | null
           ward_number?: number
           role?: 'citizen' | 'admin'
+          score?: number
           created_at?: string
           updated_at?: string
+        }
+      }
+      tasks: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          category: string | null
+          points: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          category?: string | null
+          points?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          category?: string | null
+          points?: number
+          created_at?: string
+        }
+      }
+      user_tasks: {
+        Row: {
+          id: string
+          user_id: string
+          task_id: string
+          status: 'pending' | 'submitted' | 'verified' | 'rejected'
+          image_url: string | null
+          points_rewarded: number
+          submission_text: string | null
+          created_at: string
+          submitted_at: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          task_id: string
+          status?: 'pending' | 'submitted' | 'verified' | 'rejected'
+          image_url?: string | null
+          points_rewarded?: number
+          submission_text?: string | null
+          created_at?: string
+          submitted_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          task_id?: string
+          status?: 'pending' | 'submitted' | 'verified' | 'rejected'
+          image_url?: string | null
+          points_rewarded?: number
+          submission_text?: string | null
+          created_at?: string
+          submitted_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
       }
     }

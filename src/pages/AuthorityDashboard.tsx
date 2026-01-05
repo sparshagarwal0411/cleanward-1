@@ -5,21 +5,53 @@ import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/StatCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { wards, getStatusFromScore } from "@/data/wards";
-import { 
-  BarChart3, 
-  MapPin, 
-  Users, 
-  AlertTriangle, 
-  TrendingUp, 
+import {
+  BarChart3,
+  MapPin,
+  Users,
+  AlertTriangle,
+  TrendingUp,
   TrendingDown,
   Download,
   Filter,
   Building2,
   FileText,
   Bell,
-  Settings
+  Settings,
+  ShieldCheck,
+  CheckCircle2,
+  XCircle,
+  Eye,
+  Loader2,
+  RefreshCw
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+
+interface PendingSubmission {
+  id: string;
+  status: string;
+  image_url: string;
+  submission_text: string | null;
+  submitted_at: string;
+  user_id: string;
+  task_id: string;
+  tasks: {
+    title: string;
+    points: number;
+    category: string;
+  };
+  users: {
+    first_name: string;
+    last_name: string;
+    ward_number: number;
+    score: number;
+  };
+}
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 
 // Generate chart data
@@ -62,7 +94,110 @@ const alertsData = [
 ];
 
 const AuthorityDashboard = () => {
-  // Calculate stats
+  const [pendingSubmissions, setPendingSubmissions] = useState<PendingSubmission[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [customScores, setCustomScores] = useState<Record<string, number>>({});
+  const { toast } = useToast();
+
+  const fetchPendingSubmissions = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("user_tasks")
+        .select(`
+          *,
+          tasks (*),
+          users (*)
+        `)
+        .eq("status", "submitted")
+        .order("submitted_at", { ascending: false });
+
+      if (error) throw error;
+      setPendingSubmissions(data as any);
+
+      // Initialize custom scores with default points
+      const scores: Record<string, number> = {};
+      (data as any[]).forEach(sub => {
+        scores[sub.id] = sub.tasks?.points || 10;
+      });
+      setCustomScores(scores);
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingSubmissions();
+  }, []);
+
+  const handleApprove = async (submission: PendingSubmission) => {
+    try {
+      const awardedPoints = customScores[submission.id] || 0;
+
+      // 1. Update user_task
+      const { error: utError } = await (supabase
+        .from("user_tasks") as any)
+        .update({
+          status: 'verified',
+          verified_at: new Date().toISOString(),
+          points_rewarded: awardedPoints
+        })
+        .eq("id", submission.id);
+
+      if (utError) throw utError;
+
+      // 2. Add points to user score
+      const newScore = (submission.users.score || 0) + awardedPoints;
+      const { error: userError } = await (supabase
+        .from("users") as any)
+        .update({ score: newScore })
+        .eq("id", submission.user_id);
+
+      if (userError) throw userError;
+
+      toast({
+        title: "Action Approved",
+        description: `Awarded ${awardedPoints} points to ${submission.users.first_name}.`,
+      });
+
+      fetchPendingSubmissions();
+    } catch (error) {
+      console.error("Error approving:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve action.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReject = async (submissionId: string) => {
+    try {
+      const { error } = await (supabase
+        .from("user_tasks") as any)
+        .update({ status: 'rejected' })
+        .eq("id", submissionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Action Rejected",
+        description: "The submission has been marked as invalid.",
+      });
+
+      fetchPendingSubmissions();
+    } catch (error) {
+      console.error("Error rejecting:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reject action.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const avgScore = Math.round(wards.reduce((acc, w) => acc + w.pollutionScore, 0) / wards.length);
   const criticalWards = wards.filter(w => w.pollutionScore < 40).length;
   const improvedWards = wards.filter(w => w.trend30Days < 0).length;
@@ -137,6 +272,14 @@ const AuthorityDashboard = () => {
               <TabsTrigger value="zones">Zone Analysis</TabsTrigger>
               <TabsTrigger value="trends">Trends</TabsTrigger>
               <TabsTrigger value="alerts">Alerts</TabsTrigger>
+              <TabsTrigger value="verification" className="gap-2">
+                Verification
+                {pendingSubmissions.length > 0 && (
+                  <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]">
+                    {pendingSubmissions.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
             </TabsList>
 
             <div className="flex gap-2">
@@ -169,8 +312,8 @@ const AuthorityDashboard = () => {
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={zoneData}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis 
-                        dataKey="zone" 
+                      <XAxis
+                        dataKey="zone"
                         tick={{ fontSize: 11 }}
                         angle={-45}
                         textAnchor="end"
@@ -178,9 +321,9 @@ const AuthorityDashboard = () => {
                         className="text-muted-foreground"
                       />
                       <YAxis className="text-muted-foreground" />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
                           borderRadius: '8px'
                         }}
@@ -219,8 +362,8 @@ const AuthorityDashboard = () => {
                   <div className="flex flex-wrap justify-center gap-3 mt-4">
                     {pollutionBreakdown.map((item) => (
                       <div key={item.name} className="flex items-center gap-1 text-xs">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
+                        <div
+                          className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: item.color }}
                         />
                         <span>{item.name}: {item.value}</span>
@@ -318,9 +461,8 @@ const AuthorityDashboard = () => {
                         <Badge variant={`pollution-${getStatusFromScore(zone.score)}` as any}>
                           Score: {zone.score}
                         </Badge>
-                        <div className={`flex items-center gap-1 text-sm ${
-                          zone.trend < 0 ? 'text-success' : 'text-destructive'
-                        }`}>
+                        <div className={`flex items-center gap-1 text-sm ${zone.trend < 0 ? 'text-success' : 'text-destructive'
+                          }`}>
                           {zone.trend < 0 ? (
                             <TrendingDown className="h-4 w-4" />
                           ) : (
@@ -350,9 +492,9 @@ const AuthorityDashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="month" className="text-muted-foreground" />
                     <YAxis className="text-muted-foreground" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px'
                       }}
@@ -380,23 +522,21 @@ const AuthorityDashboard = () => {
               <CardContent>
                 <div className="space-y-4">
                   {alertsData.map((alert) => (
-                    <div 
-                      key={alert.id} 
-                      className={`flex items-start gap-4 p-4 rounded-lg border-l-4 ${
-                        alert.type === 'critical' 
-                          ? 'bg-destructive/5 border-l-destructive'
-                          : alert.type === 'warning'
+                    <div
+                      key={alert.id}
+                      className={`flex items-start gap-4 p-4 rounded-lg border-l-4 ${alert.type === 'critical'
+                        ? 'bg-destructive/5 border-l-destructive'
+                        : alert.type === 'warning'
                           ? 'bg-warning/5 border-l-warning'
                           : 'bg-info/5 border-l-info'
-                      }`}
+                        }`}
                     >
-                      <AlertTriangle className={`h-5 w-5 mt-0.5 ${
-                        alert.type === 'critical' 
-                          ? 'text-destructive'
-                          : alert.type === 'warning'
+                      <AlertTriangle className={`h-5 w-5 mt-0.5 ${alert.type === 'critical'
+                        ? 'text-destructive'
+                        : alert.type === 'warning'
                           ? 'text-warning'
                           : 'text-info'
-                      }`} />
+                        }`} />
                       <div className="flex-1">
                         <div className="font-medium">{alert.message}</div>
                         <div className="text-sm text-muted-foreground">{alert.time}</div>
@@ -405,6 +545,104 @@ const AuthorityDashboard = () => {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          {/* Verification Tab */}
+          <TabsContent value="verification" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-primary" />
+                      Pending Action Verifications
+                    </CardTitle>
+                    <CardDescription>Review citizen submissions and award impact points</CardDescription>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={fetchPendingSubmissions} disabled={loading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                    <p className="text-muted-foreground">Loading submissions...</p>
+                  </div>
+                ) : pendingSubmissions.length > 0 ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {pendingSubmissions.map((sub) => (
+                      <Card key={sub.id} className="overflow-hidden border-2 hover:border-primary/20 transition-all">
+                        <div className="aspect-video relative group">
+                          <img
+                            src={sub.image_url}
+                            alt="Verification proof"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button variant="secondary" size="sm" className="gap-2" onClick={() => window.open(sub.image_url, '_blank')}>
+                              <Eye className="h-4 w-4" />
+                              View Full Size
+                            </Button>
+                          </div>
+                        </div>
+                        <CardContent className="pt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <Badge variant="outline">{sub.tasks.category}</Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(sub.submitted_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-lg mb-1">
+                            {sub.task_id === 'custom-goal' ? (sub.submission_text || "Custom Goal") : (sub.tasks?.title || "Goal")}
+                          </h4>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                            <Users className="h-3 w-3" />
+                            {sub.users.first_name} {sub.users.last_name} (Ward {sub.users.ward_number})
+                          </div>
+                          {sub.submission_text && sub.task_id !== 'custom-goal' && (
+                            <p className="text-sm border-l-2 border-primary/20 pl-2 mb-4 italic">
+                              "{sub.submission_text}"
+                            </p>
+                          )}
+
+                          <div className="flex items-center gap-2 mb-4">
+                            <Label htmlFor={`score-${sub.id}`} className="text-xs">Points:</Label>
+                            <Input
+                              id={`score-${sub.id}`}
+                              type="number"
+                              className="h-8 w-20 text-xs"
+                              value={customScores[sub.id] || 0}
+                              onChange={(e) => setCustomScores({
+                                ...customScores,
+                                [sub.id]: parseInt(e.target.value) || 0
+                              })}
+                            />
+                          </div>
+
+                          <div className="flex gap-2 pt-2 border-t">
+                            <Button className="flex-1 bg-success hover:bg-success/90 gap-2" size="sm" onClick={() => handleApprove(sub)}>
+                              <CheckCircle2 className="h-4 w-4" />
+                              Approve
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => handleReject(sub.id)}>
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20 border-2 border-dashed rounded-xl">
+                    <ShieldCheck className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-1">Queue is Empty</h3>
+                    <p className="text-muted-foreground">No pending submissions for verification at this time.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

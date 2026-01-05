@@ -33,7 +33,6 @@ const App = () => (
             <Route path="/map" element={<MapPage />} />
             <Route path="/ward/:id" element={<WardProfile />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/auth" element={<AuthPage />} />
             <Route path="/citizen" element={<CitizenDashboard />} />
             <Route path="/authority" element={<AuthorityDashboard />} />
             <Route path="/contribute" element={<ContributePage />} />
