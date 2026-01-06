@@ -26,7 +26,8 @@ import {
   XCircle,
   Eye,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Target
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -37,7 +38,8 @@ interface PendingSubmission {
   status: string;
   image_url: string;
   submission_text: string | null;
-  submitted_at: string;
+  submitted_at: string | null;
+  created_at: string;
   user_id: string;
   task_id: string;
   tasks: {
@@ -95,40 +97,103 @@ const alertsData = [
 
 const AuthorityDashboard = () => {
   const [pendingSubmissions, setPendingSubmissions] = useState<PendingSubmission[]>([]);
+  const [activeUsersCount, setActiveUsersCount] = useState(0);
+  const [totalActionsCount, setTotalActionsCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [rawCount, setRawCount] = useState<number | null>(null);
   const [customScores, setCustomScores] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
+  const fetchStats = async () => {
+    try {
+      const { count: userCount } = await supabase
+        .from("users")
+        .select("*", { count: 'exact', head: true });
+
+      const { count: actionCount } = await supabase
+        .from("user_tasks")
+        .select("*", { count: 'exact', head: true });
+
+      setActiveUsersCount(userCount || 0);
+      setTotalActionsCount(actionCount || 0);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
+
   const fetchPendingSubmissions = async () => {
     setLoading(true);
+    setLastError(null);
+    setRawCount(null);
     try {
-      const { data, error } = await supabase
-        .from("user_tasks")
-        .select(`
-          *,
-          tasks (*),
-          users (*)
-        `)
-        .eq("status", "submitted")
-        .order("submitted_at", { ascending: false });
+      // 1. Fetch user_tasks (The core data)
+      const { data: utData, error: utError } = await (supabase
+        .from("user_tasks") as any)
+        .select("*")
+        .in("status", ["submitted", "pending"])
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setPendingSubmissions(data as any);
+      if (utError) {
+        setLastError(`Database Error: ${utError.message}`);
+        throw utError;
+      }
 
-      // Initialize custom scores with default points
+      const totalCount = utData?.length || 0;
+      setRawCount(totalCount);
+
+      if (totalCount === 0) {
+        setPendingSubmissions([]);
+        return;
+      }
+
+      // 2. Fetch all unique tasks mentioned
+      const taskIds = [...new Set(((utData as any[]).map(ut => ut.task_id)) as string[])];
+      const { data: tasksData } = await supabase
+        .from("tasks")
+        .select("*")
+        .in("id", taskIds);
+
+      // 3. Fetch all unique users mentioned
+      const userIds = [...new Set(((utData as any[]).map(ut => ut.user_id)) as string[])];
+      const { data: usersData } = await supabase
+        .from("users")
+        .select("*")
+        .in("id", userIds);
+
+      // 4. Manually Join the data
+      const joinedData = (utData as any[]).map(ut => {
+        const task = (tasksData as any[] | null)?.find(t => t.id === ut.task_id);
+        const user = (usersData as any[] | null)?.find(u => u.id === ut.user_id);
+        return {
+          ...ut,
+          tasks: task || null,
+          users: user || null
+        };
+      });
+
+      setPendingSubmissions(joinedData as any);
+
+      // Initialize custom scores
       const scores: Record<string, number> = {};
-      (data as any[]).forEach(sub => {
+      joinedData.forEach(sub => {
         scores[sub.id] = sub.tasks?.points || 10;
       });
       setCustomScores(scores);
     } catch (error) {
-      console.error("Error fetching submissions:", error);
+      console.error("Error manual fetching:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRefresh = () => {
+    fetchStats();
+    fetchPendingSubmissions();
+  };
+
   useEffect(() => {
+    fetchStats();
     fetchPendingSubmissions();
   }, []);
 
@@ -148,26 +213,28 @@ const AuthorityDashboard = () => {
 
       if (utError) throw utError;
 
-      // 2. Add points to user score
-      const newScore = (submission.users.score || 0) + awardedPoints;
-      const { error: userError } = await (supabase
-        .from("users") as any)
-        .update({ score: newScore })
-        .eq("id", submission.user_id);
+      // 2. Add points to user score (only if we have the user object)
+      if (submission.users) {
+        const newScore = (submission.users.score || 0) + awardedPoints;
+        const { error: userError } = await (supabase
+          .from("users") as any)
+          .update({ score: newScore })
+          .eq("id", submission.user_id);
 
-      if (userError) throw userError;
+        if (userError) throw userError;
+      }
 
       toast({
         title: "Action Approved",
-        description: `Awarded ${awardedPoints} points to ${submission.users.first_name}.`,
+        description: `Awarded ${awardedPoints} points to ${submission.users?.first_name || 'Citizen'}.`,
       });
 
       fetchPendingSubmissions();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error approving:", error);
       toast({
         title: "Error",
-        description: "Failed to approve action.",
+        description: `Failed to approve action: ${error.message || "Unknown error"}`,
         variant: "destructive",
       });
     }
@@ -188,11 +255,11 @@ const AuthorityDashboard = () => {
       });
 
       fetchPendingSubmissions();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error rejecting:", error);
       toast({
         title: "Error",
-        description: "Failed to reject action.",
+        description: `Failed to reject action: ${error.message || "Unknown error"}`,
         variant: "destructive",
       });
     }
@@ -256,11 +323,18 @@ const AuthorityDashboard = () => {
             variant="success"
           />
           <StatCard
-            title="Active Citizens"
-            value="1.2M"
-            description="Registered users"
-            icon={Users}
+            title="Total Actions Taken"
+            value={totalActionsCount}
+            description="All active citizen goals"
+            icon={Target}
             variant="primary"
+          />
+          <StatCard
+            title="Active Citizens"
+            value={activeUsersCount}
+            description="Registered participants"
+            icon={Users}
+            variant="success"
           />
         </div>
 
@@ -273,10 +347,18 @@ const AuthorityDashboard = () => {
               <TabsTrigger value="trends">Trends</TabsTrigger>
               <TabsTrigger value="alerts">Alerts</TabsTrigger>
               <TabsTrigger value="verification" className="gap-2">
-                Verification
-                {pendingSubmissions.length > 0 && (
-                  <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]">
-                    {pendingSubmissions.length}
+                Approval Queue
+                {pendingSubmissions.filter(s => s.status === 'submitted').length > 0 && (
+                  <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px] ml-2">
+                    {pendingSubmissions.filter(s => s.status === 'submitted').length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="participation">
+                Citizen Tracking
+                {pendingSubmissions.filter(s => s.status === 'pending').length > 0 && (
+                  <Badge variant="secondary" className="h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px] ml-2">
+                    {pendingSubmissions.filter(s => s.status === 'pending').length}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -548,7 +630,7 @@ const AuthorityDashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* Verification Tab */}
+          {/* Verification Tab (Submitted Actions only) */}
           <TabsContent value="verification" className="space-y-6">
             <Card>
               <CardHeader>
@@ -556,11 +638,11 @@ const AuthorityDashboard = () => {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <ShieldCheck className="h-5 w-5 text-primary" />
-                      Pending Action Verifications
+                      Pending Submissions
                     </CardTitle>
-                    <CardDescription>Review citizen submissions and award impact points</CardDescription>
+                    <CardDescription>Review citizen proof and award points</CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={fetchPendingSubmissions} disabled={loading}>
+                  <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
                     <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                     Refresh
                   </Button>
@@ -572,36 +654,50 @@ const AuthorityDashboard = () => {
                     <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                     <p className="text-muted-foreground">Loading submissions...</p>
                   </div>
-                ) : pendingSubmissions.length > 0 ? (
+                ) : pendingSubmissions.filter(s => s.status === 'submitted').length > 0 ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {pendingSubmissions.map((sub) => (
+                    {pendingSubmissions.filter(s => s.status === 'submitted').map((sub) => (
                       <Card key={sub.id} className="overflow-hidden border-2 hover:border-primary/20 transition-all">
-                        <div className="aspect-video relative group">
-                          <img
-                            src={sub.image_url}
-                            alt="Verification proof"
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Button variant="secondary" size="sm" className="gap-2" onClick={() => window.open(sub.image_url, '_blank')}>
-                              <Eye className="h-4 w-4" />
-                              View Full Size
-                            </Button>
-                          </div>
+                        <div className="aspect-video relative group bg-muted flex items-center justify-center">
+                          {sub.image_url ? (
+                            <img
+                              src={sub.image_url}
+                              alt="Verification proof"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center gap-2 text-muted-foreground p-6 text-center">
+                              <Loader2 className="h-8 w-8 opacity-20" />
+                              <p className="text-xs">No proof submitted yet</p>
+                            </div>
+                          )}
+                          {sub.image_url && (
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button variant="secondary" size="sm" className="gap-2" onClick={() => window.open(sub.image_url!, '_blank')}>
+                                <Eye className="h-4 w-4" />
+                                View Full Size
+                              </Button>
+                            </div>
+                          )}
                         </div>
                         <CardContent className="pt-4">
                           <div className="flex items-center justify-between mb-2">
-                            <Badge variant="outline">{sub.tasks.category}</Badge>
+                            <div className="flex gap-1">
+                              <Badge variant="outline">{sub.tasks?.category || 'Goal'}</Badge>
+                              <Badge variant={sub.status === 'submitted' ? "default" : "secondary"} className="text-[10px] h-5">
+                                {sub.status === 'submitted' ? 'Evidence Provided' : 'Action Taken'}
+                              </Badge>
+                            </div>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(sub.submitted_at).toLocaleDateString()}
+                              {new Date(sub.status === 'submitted' ? (sub.submitted_at || sub.created_at) : sub.created_at).toLocaleDateString()}
                             </span>
                           </div>
                           <h4 className="font-bold text-lg mb-1">
-                            {sub.task_id === 'custom-goal' ? (sub.submission_text || "Custom Goal") : (sub.tasks?.title || "Goal")}
+                            {sub.task_id === 'custom-goal' ? (sub.submission_text || "Custom Goal") : (sub.tasks?.title || `Task: ${sub.task_id}`)}
                           </h4>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                             <Users className="h-3 w-3" />
-                            {sub.users.first_name} {sub.users.last_name} (Ward {sub.users.ward_number})
+                            {sub.users ? `${sub.users.first_name} ${sub.users.last_name} (Ward ${sub.users.ward_number})` : `User ID: ${sub.user_id.substring(0, 8)}...`}
                           </div>
                           {sub.submission_text && sub.task_id !== 'custom-goal' && (
                             <p className="text-sm border-l-2 border-primary/20 pl-2 mb-4 italic">
@@ -641,6 +737,122 @@ const AuthorityDashboard = () => {
                     <ShieldCheck className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold mb-1">Queue is Empty</h3>
                     <p className="text-muted-foreground">No pending submissions for verification at this time.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Participation/Tracking Tab */}
+          <TabsContent value="participation" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      Citizen Action Tracking
+                    </CardTitle>
+                    <CardDescription>Track which tasks citizens have chosen and award early points</CardDescription>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b text-left text-sm font-medium text-muted-foreground">
+                        <th className="py-3 px-4">Citizen</th>
+                        <th className="py-3 px-4">Action Chosen</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4">Date Taken</th>
+                        <th className="py-3 px-4">Points</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y text-sm">
+                      {pendingSubmissions.length > 0 ? (
+                        pendingSubmissions.map((sub) => (
+                          <tr key={sub.id} className="hover:bg-muted/50 transition-colors">
+                            <td className="py-3 px-4">
+                              {sub.users ? (
+                                <>
+                                  <div className="font-medium">{sub.users.first_name} {sub.users.last_name}</div>
+                                  <div className="text-xs text-muted-foreground">Ward {sub.users.ward_number}</div>
+                                </>
+                              ) : (
+                                <div className="text-xs text-muted-foreground font-mono">{sub.user_id}</div>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="font-medium">
+                                {sub.task_id === 'custom-goal' ? (sub.submission_text || "Custom Goal") : (sub.tasks?.title || sub.task_id)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">{sub.tasks?.category || 'Goal'}</div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge variant={sub.status === 'submitted' ? 'default' : 'secondary'} className="text-[10px]">
+                                {sub.status === 'submitted' ? 'Submitted' : 'Pending Proof'}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4 text-muted-foreground">
+                              {new Date(sub.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Input
+                                type="number"
+                                className="h-8 w-16 text-xs"
+                                value={customScores[sub.id] || 0}
+                                onChange={(e) => setCustomScores({
+                                  ...customScores,
+                                  [sub.id]: parseInt(e.target.value) || 0
+                                })}
+                              />
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button size="sm" variant="outline" className="h-8 px-2" onClick={() => handleApprove(sub)}>
+                                  <CheckCircle2 className="h-4 w-4 mr-1 text-success" />
+                                  Approve
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-8 px-2 text-destructive" onClick={() => handleReject(sub.id)}>
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="py-10 text-center text-muted-foreground italic">
+                            No citizen actions tracked at this time.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {lastError && (
+                  <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-2">
+                    <p className="text-xs font-mono text-destructive break-all font-bold">
+                      DEBUG INFO:
+                    </p>
+                    <p className="text-xs font-mono text-destructive break-all">
+                      Error: {lastError}
+                    </p>
+                    <p className="text-xs font-mono text-destructive break-all">
+                      Raw Row Count: {rawCount !== null ? rawCount : 'Unchecked'}
+                    </p>
+                    <p className="text-xs font-mono text-destructive break-all">
+                      Joined Row Count: {pendingSubmissions.length}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-2 italic">
+                      If Raw &gt; 0 but Joined = 0, RLS is likely blocking the admin from reading associated User/Task records.
+                    </p>
                   </div>
                 )}
               </CardContent>

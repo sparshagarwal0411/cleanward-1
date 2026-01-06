@@ -199,9 +199,9 @@ const CitizenDashboard = () => {
     }
   };
 
-  const fetchDashboardData = async (userId: string) => {
+  const fetchDashboardData = async (userId: string, wardNumber?: number) => {
     try {
-      console.log("Fetching dashboard data for user:", userId);
+      console.log("Fetching dashboard data for user:", userId, "Ward:", wardNumber);
       // 1. Fetch user tasks (joined with tasks)
       const { data: utasks, error: utasksError } = await (supabase
         .from("user_tasks") as any)
@@ -220,17 +220,19 @@ const CitizenDashboard = () => {
 
       const pickedTaskIds = (utasks as any[])?.map(ut => ut.task_id) || [];
 
-      console.log("Already picked task IDs:", pickedTaskIds);
-
       // Using static tasks combined with any custom ones in the DB
       const availableStatic = STATIC_TASKS.filter(st => !pickedTaskIds.includes(st.id));
       setAvailableTasks(availableStatic);
-      console.log("Available tasks set from static list:", availableStatic.length);
 
-      // 3. Fetch leaderboard
-      const { data: topUsers, error: lError } = await (supabase
-        .from("users") as any)
-        .select("first_name, last_name, score, id")
+      // 3. Fetch leaderboard (Filtered by Ward and Role)
+      let query = (supabase.from("users") as any).select("first_name, last_name, score, id");
+
+      if (wardNumber) {
+        query = query.eq("ward_number", wardNumber);
+      }
+
+      const { data: topUsers, error: lError } = await query
+        .eq("role", "citizen")
         .order("score", { ascending: false })
         .limit(10);
 
@@ -287,7 +289,7 @@ const CitizenDashboard = () => {
       setIsAddGoalOpen(false);
       setSelectedTaskId(null);
       setCustomGoalTitle("");
-      await fetchDashboardData(userData.id);
+      await fetchDashboardData(userData.id, userData.ward_number);
     } catch (error) {
       console.error("Error adding goal:", error);
       toast({
@@ -347,7 +349,7 @@ const CitizenDashboard = () => {
       setActiveUserTaskId(null);
       setSubmissionImage(null);
       setSubmissionText("");
-      await fetchDashboardData(userData.id);
+      await fetchDashboardData(userData.id, userData.ward_number);
     } catch (error) {
       console.error("Error submitting action:", error);
       toast({
@@ -392,7 +394,7 @@ const CitizenDashboard = () => {
           });
         } else {
           setUserData(profile as any);
-          await fetchDashboardData(session.user.id);
+          await fetchDashboardData(session.user.id, profile.ward_number);
         }
       } catch (error) {
         console.error("Error:", error);
