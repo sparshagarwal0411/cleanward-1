@@ -26,29 +26,39 @@ A comprehensive web application for monitoring and managing pollution data acros
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **React Router** - Client-side routing
-- **Tailwind CSS** - Utility-first CSS framework
-- **shadcn/ui** - High-quality React components
-- **Lucide React** - Icon library
-- **Recharts** - Data visualization
-- **Google Maps Platform** - Mapping & Traffic
-- **ElevenLabs** - AI Chatbot Integration
+- **Framework & Language**: [React 18](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
+- **Routing**: [React Router 6](https://reactrouter.com/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/), [Framer Motion](https://www.framer.com/motion/)
+- **Components & UI**:
+  - [Radix UI](https://www.radix-ui.com/) (Accordion, Dialog, Tabs, etc.)
+  - [Lucide React](https://lucide.dev/) (Icons)
+  - [Embla Carousel](https://www.embla-carousel.com/)
+  - [Vaul](https://vaul.emilkowal.ski/) (Drawers)
+  - [Sonner](https://sonner.emilkowal.ski/) (Toasts)
+- **State Management & Data Fetching**: [TanStack Query (React Query)](https://tanstack.com/query/latest)
+- **Forms & Validation**: [React Hook Form](https://react-hook-form.com/), [Zod](https://zod.dev/)
+- **Data Visualization**: [Recharts](https://recharts.org/)
+- **Interactive Maps**: [Google Maps Platform](https://developers.google.com/maps) (Maps JavaScript API & Traffic Layer)
+- **AI Integration**: [ElevenLabs ConvAI](https://elevenlabs.io/docs/conversational-ai/overview) (Smart Assistant)
+- **Visual Effects**: [React Snowfall](https://github.com/cahilfoley/react-snowfall)
 
-### Backend & Services
-- **Supabase** - Backend as a Service
-  - Authentication & user management (required)
-  - Database with Row Level Security (RLS)
-  - Edge Functions for pollution data fetching (optional)
-- **TanStack Query** - Data fetching and caching
+### Backend & Infrastructure
+- **BaaS**: [Supabase](https://supabase.com/)
+  - **Authentication**: Secure user management and login
+  - **PostgreSQL Database**: Persistent storage with Row Level Security (RLS)
+  - **Edge Functions**: Serverless logic for external API integration (WAQI/OpenAQ)
+- **Hosting**: [Vercel](https://vercel.com/) (configured via `vercel.json`)
+
+### Development Tools
+- **Package Manager**: [npm](https://www.npmjs.com/) / [Bun](https://bun.sh/)
+- **Linting & Formatting**: [ESLint](https://eslint.org/), [PostCSS](https://postcss.org/), [Autoprefixer](https://github.com/postcss/autoprefixer)
+- **Environment**: `.env` for secure credential management
 
 ### APIs Used
-- **Google Maps Platform** (Maps JavaScript API)
-- **ElevenLabs ConvAI**
-- WAQI (World Air Quality Index) API
-- OpenAQ API (via Supabase Edge Functions)
+- **Google Maps JavaScript API**: For interactive ward mapping and traffic data
+- **ElevenLabs API**: For the conversational AI assistant widget
+- **WAQI (World Air Quality Index) API**: Real-time air quality data
+- **OpenAQ API**: Historical and real-time air quality data integration
 
 ## 📦 Installation
 
