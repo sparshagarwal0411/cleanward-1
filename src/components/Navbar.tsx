@@ -10,7 +10,8 @@ import {
   Users,
   LogIn,
   LogOut,
-  IndianRupee
+  IndianRupee,
+  ShoppingBag
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,9 +138,15 @@ export function Navbar() {
       ? { to: "/citizen", label: "Citizen Dashboard", icon: Users }
       : null;
 
-  const navLinks = dashboardLink
-    ? [...baseNavLinks, dashboardLink]
-    : baseNavLinks;
+  const marketplaceLink = isAuthenticated && userRole === "citizen"
+    ? { to: "/marketplace", label: "Marketplace", icon: ShoppingBag }
+    : null;
+
+  const navLinks = [
+    ...baseNavLinks,
+    ...(dashboardLink ? [dashboardLink] : []),
+    ...(marketplaceLink ? [marketplaceLink] : []),
+  ];
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

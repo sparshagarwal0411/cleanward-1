@@ -1174,11 +1174,11 @@ const CitizenDashboard = () => {
               <CardContent className="space-y-4">
                 <div className="border-l-4 border-l-primary pl-3">
                   <div className="font-medium">Ward Clean-up Drive</div>
-                  <div className="text-sm text-muted-foreground">Jan 28, 2024 • 8:00 AM</div>
+                  <div className="text-sm text-muted-foreground">Jan 28, 2025 • 8:00 AM</div>
                 </div>
                 <div className="border-l-4 border-l-secondary pl-3">
                   <div className="font-medium">Tree Plantation Event</div>
-                  <div className="text-sm text-muted-foreground">Feb 5, 2024 • 9:00 AM</div>
+                  <div className="text-sm text-muted-foreground">Feb 5, 2025 • 9:00 AM</div>
                 </div>
                 <Button variant="civic-outline" className="w-full">
                   View All Events
