@@ -28,7 +28,16 @@ import {
   Gauge,
   RefreshCw,
   LogOut,
-  Settings
+  Settings,
+  ArrowRightLeft,
+  Zap,
+  CheckSquare,
+  Trophy,
+  Brain,
+  MessageSquare,
+  Car,
+  AlertTriangle,
+  Info
 } from "lucide-react";
 
 import {
@@ -157,6 +166,51 @@ const CitizenDashboard = () => {
   const [submissionText, setSubmissionText] = useState("");
   const [submittingAction, setSubmittingAction] = useState(false);
   const [customGoalTitle, setCustomGoalTitle] = useState("");
+
+  // Feature states
+  const [comparisonWardId, setComparisonWardId] = useState<number | null>(null);
+
+  const [weeklyActions, setWeeklyActions] = useState([
+    { id: 1, title: "Use public transport once", completed: false, participants: 850 },
+    { id: 2, title: "Avoid vehicle idling", completed: false, participants: 1240 },
+    { id: 3, title: "Practice waste segregation", completed: false, participants: 2100 },
+  ]);
+
+  const [quizStarted, setQuizStarted] = useState(false);
+  const [quizStep, setQuizStep] = useState(0);
+  const [quizScore, setQuizScore] = useState(0);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+
+  // Derived variables
+  const baseWard = userData ? getWardById(userData.ward_number) : null;
+  const wardWithAQI = userData ? wards.find(w => w.id === userData.ward_number) || baseWard : null;
+  const ward = wardWithAQI || baseWard;
+
+  const comparisonWard = comparisonWardId ? wards.find(w => w.id === comparisonWardId) || getWardById(comparisonWardId) : null;
+
+  // Calculate dynamic rank
+  const sortedWardsByScore = [...wards].sort((a, b) => b.pollutionScore - a.pollutionScore);
+  const wardRank = ward ? sortedWardsByScore.findIndex(w => w.id === ward.id) + 1 : 0;
+  const totalWards = wards.length;
+  const rankPercentile = totalWards > 0 ? Math.max(1, Math.round((wardRank / totalWards) * 100)) : 0;
+
+  const quizQuestions = [
+    {
+      question: `What is the primary source of pollution in ${ward?.name || 'this ward'}?`,
+      options: ward?.sources || ["Vehicles", "Industry", "Waste Burning", "Construction"],
+      answer: 0
+    },
+    {
+      question: "Which of these is most effective in reducing local air pollution?",
+      options: ["Planting trees", "Using public transport", "Proper waste disposal", "All of the above"],
+      answer: 3
+    },
+    {
+      question: "What does AQI stand for?",
+      options: ["Air Quality Index", "Atmospheric Quota Indicator", "Air Quantity Increment", "Aero Quality Item"],
+      answer: 0
+    }
+  ];
 
   const handleUpdateWard = async () => {
     if (!userData) return;
@@ -385,7 +439,7 @@ const CitizenDashboard = () => {
           .eq("id", session.user.id)
           .single();
 
-        if (profileError) {
+        if (profileError || !profile) {
           console.error("Error fetching user profile:", profileError);
           toast({
             title: "Error",
@@ -393,8 +447,9 @@ const CitizenDashboard = () => {
             variant: "destructive",
           });
         } else {
-          setUserData(profile as any);
-          await fetchDashboardData(session.user.id, profile.ward_number);
+          const typedProfile = profile as unknown as UserData;
+          setUserData(typedProfile);
+          await fetchDashboardData(session.user.id, typedProfile.ward_number);
         }
       } catch (error) {
         console.error("Error:", error);
@@ -411,9 +466,6 @@ const CitizenDashboard = () => {
     fetchUserData();
   }, [navigate, toast]);
 
-  const baseWard = userData ? getWardById(userData.ward_number) : null;
-  const wardWithAQI = userData ? wards.find(w => w.id === userData.ward_number) || baseWard : null;
-  const ward = wardWithAQI || baseWard;
   const userName = userData ? `${userData.first_name} ${userData.last_name}` : "User";
 
   const impactGoals = userTasks.filter(ut => ut.status === 'pending' || ut.status === 'submitted');
@@ -473,7 +525,7 @@ const CitizenDashboard = () => {
                       <div className="font-semibold">{userName}</div>
                       <div className="text-sm text-muted-foreground flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        Ward {userData.ward_number}
+                        Ward {userData?.ward_number}
                       </div>
                     </div>
                   </div>
@@ -483,7 +535,7 @@ const CitizenDashboard = () => {
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => {
-                  setNewWardNumber(userData.ward_number.toString());
+                  setNewWardNumber(userData?.ward_number.toString() || "");
                   setIsChangeWardOpen(true);
                 }}>
                   <Settings className="mr-2 h-4 w-4" />
@@ -902,9 +954,181 @@ const CitizenDashboard = () => {
                 </Dialog>
               </TabsContent>
             </Tabs>
+
+            {/* Ward Comparison Section */}
+            <Card className="border-2 border-primary/10">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ArrowRightLeft className="h-5 w-5 text-primary" />
+                  Compare My Ward
+                </CardTitle>
+                <CardDescription>Compare your ward's metrics with another ward in Delhi</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex-1 w-full">
+                    <Label className="text-xs mb-1 block">My Ward</Label>
+                    <div className="p-2 bg-muted rounded border text-sm font-medium">
+                      {ward?.name} (Ward {userData?.ward_number})
+                    </div>
+                  </div>
+                  <div className="hidden sm:block">
+                    <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 w-full">
+                    <Label className="text-xs mb-1 block">Compare With</Label>
+                    <WardSelector
+                      value={comparisonWardId || undefined}
+                      onChange={(val) => setComparisonWardId(val)}
+                    />
+                  </div>
+                </div>
+
+                {comparisonWard && ward && (
+                  <div className="grid gap-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="grid grid-cols-3 gap-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <div>Metric</div>
+                      <div className="text-center">{ward.name}</div>
+                      <div className="text-center">{comparisonWard.name}</div>
+                    </div>
+
+                    {[
+                      { label: 'AQI', key: 'aqi', icon: Wind, iconColor: 'text-info', higherIsBetter: false },
+                      { label: 'PM2.5', key: 'pm25', icon: Info, iconColor: 'text-primary', higherIsBetter: false, defaultValue: 150 },
+                      { label: 'Traffic', key: 'trafficStatus', icon: Car, iconColor: 'text-warning', higherIsBetter: false },
+                      { label: 'CleanScore', key: 'pollutionScore', icon: Zap, iconColor: 'text-accent', higherIsBetter: true },
+                      { label: 'Water Quality', key: 'waterQuality', icon: Droplets, iconColor: 'text-info', higherIsBetter: true },
+                      { label: 'Waste Mgmt', key: 'wasteManagement', icon: Trash2, iconColor: 'text-warning', higherIsBetter: true },
+                      { label: 'Noise Level', key: 'noiseLevel', icon: AlertTriangle, iconColor: 'text-destructive', higherIsBetter: false },
+                    ].map((metric) => {
+                      const getVal = (w: any) => {
+                        if (metric.key === 'trafficStatus') {
+                          const map: any = { low: 1, moderate: 2, heavy: 3 };
+                          return map[w.trafficStatus] || 2;
+                        }
+                        return w[metric.key] || (metric.defaultValue || 0);
+                      };
+
+                      const val1 = getVal(ward);
+                      const val2 = getVal(comparisonWard);
+                      const isBetter1 = metric.higherIsBetter ? val1 > val2 : val1 < val2;
+                      const isBetter2 = metric.higherIsBetter ? val2 > val1 : val2 < val1;
+                      const Icon = metric.icon;
+
+                      // Display values
+                      const disp1 = metric.key === 'trafficStatus' ? ward.trafficStatus : val1;
+                      const disp2 = metric.key === 'trafficStatus' ? comparisonWard.trafficStatus : val2;
+
+                      return (
+                        <div key={metric.key} className="grid grid-cols-3 gap-2 p-2 bg-muted/30 rounded-lg items-center text-sm border border-transparent">
+                          <div className="flex items-center gap-2">
+                            <Icon className={`h-4 w-4 ${metric.iconColor}`} />
+                            <span className="text-xs font-medium">{metric.label}</span>
+                          </div>
+                          <div className={`text-center py-1 rounded capitalize ${isBetter1 ? 'bg-success/10 border border-success/20 font-bold text-success' : 'text-muted-foreground'}`}>
+                            {disp1}
+                          </div>
+                          <div className={`text-center py-1 rounded capitalize ${isBetter2 ? 'bg-success/10 border border-success/20 font-bold text-success' : 'text-muted-foreground'}`}>
+                            {disp2}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    <div className="p-3 bg-primary/5 border border-primary/10 rounded-lg flex gap-3 items-start">
+                      <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <p className="text-sm">
+                        {ward.pollutionScore > comparisonWard.pollutionScore
+                          ? `Good news! Your ward (${ward.name}) is ranking cleaner than ${comparisonWard.name} overall.`
+                          : `Insights: ${comparisonWard.name} is performing better overall. Check their Green Actions for inspiration!`}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Ward CleanScore & Rank Section */}
+            <Card className="border-2 border-accent/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-accent" />
+                  Ward CleanScore & Rank
+                </CardTitle>
+                <CardDescription>How your ward performs against others in Delhi</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <div className="p-6 bg-accent/5 rounded-2xl border border-accent/10 flex flex-col items-center justify-center text-center">
+                      <div className="text-sm font-medium text-muted-foreground mb-1 uppercase tracking-wider">CleanScore</div>
+                      <div className="text-6xl font-bold text-accent">{ward?.pollutionScore}</div>
+                      <div className="mt-2 text-sm text-muted-foreground font-medium">
+                        {ward?.pollutionScore! > 80 ? "Excellent" : ward?.pollutionScore! > 60 ? "Good" : "Needs Action"}
+                      </div>
+                      <Progress value={ward?.pollutionScore} className="h-2 w-full mt-4" />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-muted rounded-xl border">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Trophy className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-muted-foreground font-medium">Your Ward Rank</div>
+                          <div className="text-xl font-bold">#{wardRank} of {totalWards}</div>
+                        </div>
+                      </div>
+                      <Badge variant="success">Top {rankPercentile}%</Badge>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-warning" />
+                      Cleanest Wards Leaderboard
+                    </h4>
+                    <div className="space-y-2">
+                      {wards.sort((a, b) => b.pollutionScore - a.pollutionScore).slice(0, 5).map((w, idx) => (
+                        <div key={w.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors border border-transparent hover:border-muted">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-muted-foreground w-4">{idx + 1}</span>
+                            <span className="text-sm font-medium">{w.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px] font-bold">{w.pollutionScore} pts</Badge>
+                            {idx === 0 && <Zap className="h-3 w-3 text-accent fill-accent" />}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-2 border-t mt-4">
+                      <h4 className="font-semibold text-sm flex items-center gap-2 mb-3">
+                        <TrendingUp className="h-4 w-4 text-success" />
+                        Most Improved This Week
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2 bg-success/5 rounded border border-success/10 text-xs">
+                          <div className="font-bold">Ward 42 (Rohini)</div>
+                          <div className="text-success">+12 points</div>
+                        </div>
+                        <div className="p-2 bg-success/5 rounded border border-success/10 text-xs">
+                          <div className="font-bold">Ward 108 (Dwarka)</div>
+                          <div className="text-success">+8 points</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+
+
           </div>
 
-          {/* Sidebar */}
+          {/* Reorganized Sidebar */}
           <div className="space-y-6">
             {/* Achievement Card */}
             <Card variant="civic">
@@ -916,7 +1140,7 @@ const CitizenDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-primary">{userData.score || 0}</div>
+                  <div className="text-4xl font-bold text-primary">{userData?.score || 0}</div>
                   <div className="text-sm text-muted-foreground">Impact Points</div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-center">
@@ -929,9 +1153,13 @@ const CitizenDashboard = () => {
                     <div className="text-xs text-muted-foreground">Tasks Done</div>
                   </div>
                 </div>
-                <Badge variant="success" className="w-full justify-center py-2">
-                  {userData.score > 200 ? 'Green Master' : userData.score > 50 ? 'Green Warrior' : 'Environmentalist'}
-                </Badge>
+                <div className="p-4 bg-accent/10 rounded-xl border border-accent/20 flex items-center gap-3">
+                  <Award className="h-8 w-8 text-accent" />
+                  <div>
+                    <div className="text-xs font-bold uppercase text-accent">Current Badge</div>
+                    <div className="font-bold">{(userData?.score || 0) > 200 ? 'Green Master' : (userData?.score || 0) > 50 ? 'Green Warrior' : 'Environmentalist'}</div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -952,38 +1180,195 @@ const CitizenDashboard = () => {
                   <div className="font-medium">Tree Plantation Event</div>
                   <div className="text-sm text-muted-foreground">Feb 5, 2024 • 9:00 AM</div>
                 </div>
-                <div className="border-l-4 border-l-accent pl-3">
-                  <div className="font-medium">Awareness Workshop</div>
-                  <div className="text-sm text-muted-foreground">Feb 12, 2024 • 4:00 PM</div>
-                </div>
                 <Button variant="civic-outline" className="w-full">
                   View All Events
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Leaderboard */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-success" />
-                  Ward Leaderboard
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {leaderboard.map((user, idx) => (
-                  <div key={idx} className={`flex items-center justify-between ${user.isMe ? 'bg-primary/10 -mx-3 px-3 py-2 rounded' : ''}`}>
-                    <div className="flex items-center gap-2">
-                      <span className={`font-bold ${idx === 0 ? 'text-accent' : idx === 1 ? 'text-muted-foreground' : ''}`}>{idx + 1}</span>
-                      <span className={user.isMe ? 'font-medium' : ''}>{user.isMe ? 'You' : user.name}</span>
-                    </div>
-                    <span className="text-sm font-medium">{user.score} pts</span>
+            {/* Weekly Green Actions Section - Moved from Main Content */}
+            <Card className="border-2 border-primary/20 overflow-hidden">
+              <CardHeader className="bg-primary/5 pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <CheckSquare className="h-4 w-4 text-primary" />
+                      Weekly Green Actions
+                    </CardTitle>
+                    <CardDescription className="text-xs">Small habits, big impact. Complete these this week!</CardDescription>
                   </div>
-                ))}
+                  <Badge variant="secondary" className="text-[10px] px-2 py-0">Week 1</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3">
+                  {weeklyActions.map((action) => (
+                    <div key={action.id} className="flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-primary/10 hover:bg-muted/30 transition-all group">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => {
+                            setWeeklyActions(actions => actions.map(a => a.id === action.id ? { ...a, completed: !a.completed } : a));
+                            if (!action.completed) {
+                              toast({ title: "Action Completed!", description: "You've earned 10 impact points!" });
+                            }
+                          }}
+                          className={`h-5 w-5 rounded-md border-2 flex items-center justify-center transition-colors ${action.completed ? "bg-primary border-primary" : "border-muted-foreground/30 group-hover:border-primary/50"}`}
+                        >
+                          {action.completed && <CheckCircle className="h-3 w-3 text-white" />}
+                        </button>
+                        <div>
+                          <div className={`text-sm font-semibold ${action.completed ? "line-through text-muted-foreground" : ""}`}>
+                            {action.title}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <User className="h-2 w-2" />
+                            {action.participants} citizens
+                          </div>
+                        </div>
+                      </div>
+                      <Badge variant={action.completed ? "success" : "outline"} className="text-[10px] px-1.5 py-0">
+                        {action.completed ? "+10" : "10"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pollution Awareness Quiz Section - Re-prioritized */}
+            <Card className="border-2 border-accent/20 bg-accent/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Brain className="h-4 w-4 text-accent" />
+                  Ward Quiz
+                </CardTitle>
+                <CardDescription className="text-xs">Test your knowledge</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-2">
+                {!quizStarted && !quizCompleted ? (
+                  <div className="text-center py-2">
+                    <div className="h-12 w-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <Brain className="h-6 w-6 text-accent" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Earn the "CleanWard Aware" badge!
+                    </p>
+                    <Button size="sm" onClick={() => setQuizStarted(true)} className="bg-accent hover:bg-accent/90 w-full text-xs h-8">
+                      Start Quiz
+                    </Button>
+                  </div>
+                ) : quizCompleted ? (
+                  <div className="text-center py-2 animate-in zoom-in duration-300">
+                    <Trophy className="h-8 w-8 text-success mx-auto mb-1" />
+                    <div className="text-sm font-bold">Score: {quizScore}/3</div>
+                    <div className="text-[10px] text-muted-foreground mb-2 italic">CleanWard Aware Citizen</div>
+                    <Button variant="outline" size="sm" className="w-full h-7 text-[10px]" onClick={() => {
+                      setQuizCompleted(false);
+                      setQuizStarted(false);
+                      setQuizStep(0);
+                      setQuizScore(0);
+                    }}>
+                      Retake
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-[10px] font-medium">
+                      <span>Q{quizStep + 1} of 3</span>
+                      <span>Score: {quizScore}</span>
+                    </div>
+                    <Progress value={(quizStep + 1) * 33.3} className="h-1" />
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold leading-tight line-clamp-2">
+                        {quizQuestions[quizStep].question}
+                      </h4>
+                      <div className="grid gap-1.5">
+                        {quizQuestions[quizStep].options.map((option, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              if (idx === quizQuestions[quizStep].answer) {
+                                setQuizScore(s => s + 1);
+                                toast({ title: "Correct!", variant: "default" });
+                              } else {
+                                toast({ title: "Incorrect", description: `Correct: ${quizQuestions[quizStep].options[quizQuestions[quizStep].answer]}`, variant: "destructive" });
+                              }
+
+                              if (quizStep < 2) {
+                                setQuizStep(s => s + 1);
+                              } else {
+                                setQuizCompleted(true);
+                              }
+                            }}
+                            className="w-full text-left p-2 rounded-lg border border-muted hover:border-accent hover:bg-accent/5 transition-all text-[10px] font-medium"
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Old Goals/Actions (Moved to Sidebar for less clutter) */}
+            <Card className="border-dashed border-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">My Custom Goals</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {impactGoals.length > 0 ? (
+                    impactGoals.slice(0, 2).map((ut) => (
+                      <div key={ut.id} className="text-xs p-2 bg-muted rounded">
+                        {ut.task_id === 'custom-goal' ? (ut.submission_text || "Custom Goal") : (ut.tasks?.title || "Goal")}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No custom goals set.</p>
+                  )}
+                  <Button variant="ghost" size="sm" className="w-full text-xs h-7" onClick={() => setIsAddGoalOpen(true)}>
+                    + Add Goal
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
+
+        {/* AI Chatbot Access Section - Full Width */}
+        <div className="mt-12 mb-8">
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <div className="h-20 w-20 rounded-3xl bg-primary flex items-center justify-center shrink-0 shadow-xl rotate-3 group-hover:rotate-0 transition-transform">
+                  <MessageSquare className="h-10 w-10 text-white" />
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-2xl font-bold mb-2">Need real-time help?</h3>
+                  <p className="text-muted-foreground text-base max-w-2xl">
+                    Our CleanWard AI Assistant is available 24/7 to answer your questions about pollution, waste disposal, and local policies.
+                    Get instant guidance tailored to {ward?.name || "your ward"}.
+                  </p>
+                </div>
+                <Button size="lg" className="shrink-0 gap-3 px-8 h-14 text-lg shadow-lg hover:shadow-primary/20 transition-all" onClick={() => {
+                  const chatbot = document.querySelector('elevenlabs-convai');
+                  if (chatbot) {
+                    // @ts-ignore
+                    chatbot.shadowRoot.querySelector('button')?.click();
+                  }
+                }}>
+                  Chat with CleanBot
+                  <ArrowRightLeft className="h-5 w-5 rotate-90" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Bottom Spacer/Padding */}
+        <div className="h-20" />
       </div>
     </Layout>
   );
